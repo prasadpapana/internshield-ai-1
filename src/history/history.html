@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scan history \u2014 InternShield AI</title>
+  <link rel="stylesheet" href="history.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="head">
+      <div class="head__brand">
+        <span class="head__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="#4f46e5" />
+            <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="head__title">Scan history</h1>
+          <p class="head__sub" id="countSub">\u2014</p>
+        </div>
+      </div>
+      <button class="btn btn--ghost btn--sm" id="clearAll">Clear all</button>
+    </header>
+
+    <div class="controls">
+      <input class="search" id="search" type="search" placeholder="Search company or job title\u2026" />
+      <div class="filters" id="filters">
+        <button class="chip chip--active" data-risk="all">All</button>
+        <button class="chip" data-risk="safe">Safe</button>
+        <button class="chip" data-risk="low">Low</button>
+        <button class="chip" data-risk="medium">Caution</button>
+        <button class="chip" data-risk="high">High</button>
+        <button class="chip" data-risk="critical">Scam</button>
+      </div>
+    </div>
+
+    <ul class="list" id="list"></ul>
+
+    <div class="empty" id="empty" hidden>
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+      </svg>
+      <p class="empty__title" id="emptyTitle">No scans yet</p>
+      <p class="empty__sub" id="emptySub">Open a job posting and run a scan from the toolbar to see it here.</p>
+    </div>
+  </div>
+
+  <script type="module" src="history.js"></script>
+</body>
+</html>

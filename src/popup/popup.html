@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InternShield AI</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app" id="app" data-state="idle">
+
+    <!-- Header -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z"
+                  fill="url(#g)" />
+            <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="g" x1="4" y1="2" x2="20" y2="22"
+                              gradientUnits="userSpaceOnUse">
+                <stop stop-color="#5B5BF0" /><stop offset="1" stop-color="#7C3AED" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="brand__name">InternShield<span class="brand__ai"> AI</span></span>
+      </div>
+      <nav class="topbar__nav">
+        <button class="iconbtn" id="openHistory" title="Scan history" aria-label="Scan history">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 4v4h4" /><path d="M12 8v4l3 2" />
+          </svg>
+        </button>
+        <button class="iconbtn" id="openSettings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 6 8.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 18 6l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <main class="stage">
+
+      <!-- IDLE -->
+      <section class="panel panel--idle" data-panel="idle">
+        <div class="hero">
+          <div class="hero__ring" aria-hidden="true">
+            <svg viewBox="0 0 120 120" width="116" height="116">
+              <circle class="ring__track" cx="60" cy="60" r="52" />
+              <circle class="ring__idle" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="hero__ringicon">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                   stroke-linejoin="round">
+                <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <h1 class="idle__title">Check before you apply</h1>
+        <p class="idle__sub">Scan this job posting for scam signals \u2014 fees, fake recruiters,
+          risky domains, and pressure tactics.</p>
+        <button class="btn btn--primary" id="scanBtn">Scan this page</button>
+        <p class="idle__note">Runs on-device. Nothing leaves your browser.</p>
+      </section>
+
+      <!-- LOADING -->
+      <section class="panel panel--loading" data-panel="loading">
+        <div class="hero">
+          <div class="hero__ring hero__ring--spin" aria-hidden="true">
+            <svg viewBox="0 0 120 120" width="116" height="116">
+              <circle class="ring__track" cx="60" cy="60" r="52" />
+              <circle class="ring__spin" cx="60" cy="60" r="52" />
+            </svg>
+          </div>
+        </div>
+        <p class="loading__status" id="loadingStatus">Reading the page\u2026</p>
+      </section>
+
+      <!-- RESULT -->
+      <section class="panel panel--result" data-panel="result">
+        <div class="verdict">
+          <div class="gauge" id="gauge">
+            <svg viewBox="0 0 120 120" width="132" height="132">
+              <circle class="gauge__track" cx="60" cy="60" r="52" />
+              <circle class="gauge__fill" id="gaugeFill" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="gauge__center">
+              <span class="gauge__score" id="scoreVal">0</span>
+              <span class="gauge__unit">trust score</span>
+            </div>
+          </div>
+          <div class="verdict__meta">
+            <span class="riskpill" id="riskPill">\u2014</span>
+            <p class="verdict__summary" id="summary"></p>
+            <div class="ministats">
+              <div class="ministat">
+                <span class="ministat__num" id="scamVal">0%</span>
+                <span class="ministat__lbl">scam risk</span>
+              </div>
+              <div class="ministat">
+                <span class="ministat__num" id="confVal">0%</span>
+                <span class="ministat__lbl">confidence</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="jobref">
+          <span class="jobref__title" id="jobTitle"></span>
+          <span class="jobref__company" id="jobCompany"></span>
+        </div>
+
+        <div class="breakdown" id="breakdown"></div>
+
+        <div class="findings">
+          <div class="findings__col">
+            <h2 class="findings__h">In its favor</h2>
+            <ul class="findlist findlist--pos" id="posList"></ul>
+          </div>
+          <div class="findings__col">
+            <h2 class="findings__h">Watch out for</h2>
+            <ul class="findlist findlist--neg" id="negList"></ul>
+          </div>
+        </div>
+
+        <div class="reco" id="reco"></div>
+
+        <div class="actions">
+          <button class="btn btn--ghost" id="rescanBtn">Re-scan</button>
+          <button class="btn btn--danger" id="reportBtn">Report scam</button>
+        </div>
+      </section>
+
+      <!-- ERROR -->
+      <section class="panel panel--error" data-panel="error">
+        <div class="errbox">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor"
+               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" />
+          </svg>
+          <p class="errbox__msg" id="errorMsg">Something went wrong.</p>
+          <button class="btn btn--primary" id="retryBtn">Try again</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Report dialog -->
+  <div class="modal" id="reportModal" hidden>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+      <h2 class="modal__title" id="reportTitle">Report this posting</h2>
+      <p class="modal__sub">Save it to your scam reports. This stays on your device unless you
+        connect a backend in Settings.</p>
+      <label class="modal__label" for="reportReason">What looks wrong? (optional)</label>
+      <textarea class="modal__input" id="reportReason" rows="3"
+                placeholder="e.g. asked for a registration fee over WhatsApp"></textarea>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="reportCancel">Cancel</button>
+        <button class="btn btn--danger" id="reportSubmit">Save report</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

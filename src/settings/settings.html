@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings \u2014 InternShield AI</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="head">
+      <span class="head__mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+          <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="#4f46e5" />
+          <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h1 class="head__title">Settings</h1>
+        <p class="head__sub">InternShield AI \u00b7 v1.0.0</p>
+      </div>
+    </header>
+
+    <section class="group">
+      <h2 class="group__h">Appearance</h2>
+      <div class="row">
+        <div class="row__text">
+          <span class="row__label">Theme</span>
+          <span class="row__hint">How the extension looks.</span>
+        </div>
+        <div class="seg" id="theme">
+          <button class="seg__btn" data-theme-val="system">System</button>
+          <button class="seg__btn" data-theme-val="light">Light</button>
+          <button class="seg__btn" data-theme-val="dark">Dark</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="row__text">
+          <span class="row__label">Language</span>
+          <span class="row__hint">More languages are coming.</span>
+        </div>
+        <select class="select" id="language">
+          <option value="en">English</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 class="group__h">Scanning</h2>
+      <label class="row row--toggle">
+        <div class="row__text">
+          <span class="row__label">Auto-scan job pages</span>
+          <span class="row__hint">Quietly scan pages that look like job postings and notify you about risky ones.</span>
+        </div>
+        <span class="switch"><input type="checkbox" id="autoScan" /><span class="switch__track"></span></span>
+      </label>
+      <label class="row row--toggle">
+        <div class="row__text">
+          <span class="row__label">Risk notifications</span>
+          <span class="row__hint">Show a desktop alert when a scan flags medium risk or higher.</span>
+        </div>
+        <span class="switch"><input type="checkbox" id="notifications" /><span class="switch__track"></span></span>
+      </label>
+      <label class="row row--toggle">
+        <div class="row__text">
+          <span class="row__label">Privacy mode</span>
+          <span class="row__hint">Don\u2019t store the raw page text with your scans \u2014 only the verdict and signals.</span>
+        </div>
+        <span class="switch"><input type="checkbox" id="privacyMode" /><span class="switch__track"></span></span>
+      </label>
+    </section>
+
+    <section class="group">
+      <h2 class="group__h">Backend (optional)</h2>
+      <div class="row row--stack">
+        <div class="row__text">
+          <span class="row__label">Sync &amp; enrichment URL</span>
+          <span class="row__hint">Connect a Google Apps Script backend to sync history across devices and enrich company data. Leave blank to run fully on-device.</span>
+        </div>
+        <input class="input" id="backendUrl" type="url" inputmode="url"
+               placeholder="https://script.google.com/macros/s/\u2026/exec" />
+      </div>
+    </section>
+
+    <section class="group group--danger">
+      <h2 class="group__h">Your data</h2>
+      <div class="row">
+        <div class="row__text">
+          <span class="row__label">Stored on this device</span>
+          <span class="row__hint" id="dataStats">\u2014</span>
+        </div>
+        <button class="btn btn--del" id="clearData">Delete everything</button>
+      </div>
+    </section>
+
+    <p class="saved" id="saved" hidden>Saved</p>
+  </div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>
