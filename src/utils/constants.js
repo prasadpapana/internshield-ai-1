@@ -60,6 +60,7 @@ export const ATS_DOMAINS = Object.freeze([
   'greenhouse.io', 'lever.co', 'workday.com', 'myworkdayjobs.com',
   'ashbyhq.com', 'jobvite.com', 'icims.com', 'smartrecruiters.com',
   'taleo.net', 'bamboohr.com', 'breezy.hr', 'workable.com',
+  'linkedin.com', 'indeed.com', 'glassdoor.com', 'naukri.com', 'internshala.com',
 ]);
 
 // Heuristic phrase lists. Each entry: { re: RegExp, weight, label }.

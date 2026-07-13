@@ -69,12 +69,14 @@
 
     const jobTitle = ld.jobTitle || firstMatch([
       '[data-testid="jobsearch-JobInfoHeader-title"]',
+      '.profile', '[class*="profile"]',
       'h1.job-title', 'h1.jobtitle', 'h1[class*="title"]',
       'h1',
     ]) || metaContent(['og:title']) || document.title;
 
     const company = ld.company || firstMatch([
       '[data-testid="inlineHeader-companyName"]',
+      '.company_name', '[class*="company_name"]',
       '[class*="company-name"]', '[class*="companyName"]',
       '[itemprop="hiringOrganization"]', 'a[href*="/company/"]',
     ]) || metaContent(['og:site_name']);

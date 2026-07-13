@@ -43,7 +43,7 @@ export function analyzeDomain(page) {
     || ATS_DOMAINS.some((a) => pageHost === a || pageHost.endsWith(`.${a}`));
   if (hasAts) {
     score += 20;
-    positives.push('Uses a recognized applicant tracking system');
+    positives.push('Uses a recognized applicant tracking system or trusted job platform');
   }
 
   // Recruiter email analysis.
