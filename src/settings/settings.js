@@ -50,6 +50,10 @@ async function init() {
   applyTheme(settings.theme);
   paintTheme();
 
+  $('openDashboard').addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/history/history.html') });
+  });
+
   $('language').value = settings.language;
   $('autoScan').checked = settings.autoScan;
   $('notifications').checked = settings.notifications;

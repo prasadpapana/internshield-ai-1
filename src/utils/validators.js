@@ -9,7 +9,7 @@ import { normalizeSpace } from './helpers.js';
 const MESSAGE_TYPES = new Set([
   'SCAN_PAGE', 'EXTRACT_PAGE', 'PAGE_DATA', 'GET_HISTORY', 'CLEAR_HISTORY',
   'DELETE_SCAN', 'GET_SETTINGS', 'SAVE_SETTINGS', 'REPORT_SCAM', 'GET_REPORTS',
-  'PING',
+  'PING', 'DELETE_REPORT', 'CLEAR_REPORTS',
 ]);
 
 /** True if a runtime message has a known, well-formed type. */

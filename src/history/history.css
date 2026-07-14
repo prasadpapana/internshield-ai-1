@@ -14,7 +14,7 @@ html[data-theme="dark"] {
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
-.wrap { max-width: 760px; margin: 0 auto; padding: 28px 22px 60px; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 28px 22px 60px; }
 
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
 .head__brand { display: flex; gap: 12px; align-items: center; }
@@ -68,3 +68,42 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .empty { text-align: center; padding: 70px 20px; color: var(--muted); }
 .empty__title { font-size: 16px; font-weight: 650; color: var(--ink); margin: 14px 0 6px; }
 .empty__sub { font-size: 13px; margin: 0; }
+
+/* Dashboard Stats Grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); padding: 18px 20px; box-shadow: var(--shadow); transition: transform 0.2s ease, box-shadow 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(20,23,42,.12); }
+.stat-card__lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 8px; }
+.stat-card__val { font-size: 28px; font-weight: 800; margin: 0; color: var(--ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-card__sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+.stat-card__progress { width: 100%; height: 6px; background: var(--panel-2); border-radius: 999px; margin-top: 14px; overflow: hidden; }
+.stat-card__progress-bar { height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand-2)); border-radius: 999px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.text--warning { color: var(--medium) !important; }
+.text--danger { color: var(--critical) !important; }
+
+/* Risk Distribution Profile */
+.dist-section { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); padding: 20px 22px; margin-bottom: 24px; box-shadow: var(--shadow); }
+.section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 14px; }
+.dist-bar { display: flex; height: 16px; border-radius: 999px; overflow: hidden; background: var(--panel-2); margin-bottom: 14px; }
+.dist-segment { height: 100%; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.dist-segment[data-level="safe"] { background-color: var(--safe); }
+.dist-segment[data-level="low"] { background-color: var(--low); }
+.dist-segment[data-level="medium"] { background-color: var(--medium); }
+.dist-segment[data-level="high"] { background-color: var(--high); }
+.dist-segment[data-level="critical"] { background-color: var(--critical); }
+.dist-legend { display: flex; flex-wrap: wrap; gap: 16px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+.legend-dot { width: 8px; height: 8px; border-radius: 999px; }
+
+/* Tabs Navigation */
+.tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; gap: 8px; }
+.tab-btn { font: inherit; font-size: 13.5px; font-weight: 700; background: transparent; border: none; padding: 10px 16px; color: var(--muted); cursor: pointer; position: relative; border-radius: var(--radius-sm) var(--radius-sm) 0 0; transition: color 0.15s ease, background 0.15s ease; }
+.tab-btn:hover { color: var(--ink); background: var(--panel); }
+.tab-btn--active { color: var(--brand); }
+.tab-btn--active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--brand); }
+
+/* Reported scam custom styles */
+.report-reason { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; padding: 10px 12px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--critical) 6%, var(--bg)); border-left: 3px solid var(--critical); margin: 12px 0 6px; }
+.report-reason strong { font-weight: 700; color: var(--critical); }
+.report-date { font-size: 11px; color: var(--muted); margin-top: 4px; display: block; }
+

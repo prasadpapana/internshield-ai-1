@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Settings \u2014 InternShield AI</title>
+  <title>Settings — InternShield AI</title>
   <link rel="stylesheet" href="settings.css" />
 </head>
 <body>
   <div class="wrap">
     <header class="head">
-      <span class="head__mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-          <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="#4f46e5" />
-          <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </span>
-      <div>
-        <h1 class="head__title">Settings</h1>
-        <p class="head__sub">InternShield AI \u00b7 v1.0.0</p>
+      <div class="head__brand">
+        <span class="head__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="#4f46e5" />
+            <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div>
+          <h1 class="head__title">Settings</h1>
+          <p class="head__sub">InternShield AI · v1.0.0</p>
+        </div>
       </div>
+      <button class="btn btn--ghost btn--sm" id="openDashboard">Dashboard</button>
     </header>
 
     <section class="group">
@@ -64,7 +67,7 @@
       <label class="row row--toggle">
         <div class="row__text">
           <span class="row__label">Privacy mode</span>
-          <span class="row__hint">Don\u2019t store the raw page text with your scans \u2014 only the verdict and signals.</span>
+          <span class="row__hint">Don’t store the raw page text with your scans — only the verdict and signals.</span>
         </div>
         <span class="switch"><input type="checkbox" id="privacyMode" /><span class="switch__track"></span></span>
       </label>
@@ -78,7 +81,7 @@
           <span class="row__hint">Connect a Google Apps Script backend to sync history across devices and enrich company data. Leave blank to run fully on-device.</span>
         </div>
         <input class="input" id="backendUrl" type="url" inputmode="url"
-               placeholder="https://script.google.com/macros/s/\u2026/exec" />
+               placeholder="https://script.google.com/macros/s/…/exec" />
       </div>
     </section>
 
@@ -87,7 +90,7 @@
       <div class="row">
         <div class="row__text">
           <span class="row__label">Stored on this device</span>
-          <span class="row__hint" id="dataStats">\u2014</span>
+          <span class="row__hint" id="dataStats">—</span>
         </div>
         <button class="btn btn--del" id="clearData">Delete everything</button>
       </div>

@@ -124,3 +124,19 @@ export async function addReport(report) {
   });
   return report;
 }
+
+export async function deleteReport(id) {
+  const list = (await getReports()).filter((r) => r.id !== id);
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.REPORTS]: await encryptJson(list),
+  });
+  return list;
+}
+
+export async function clearReports() {
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.REPORTS]: await encryptJson([]),
+  });
+}
+
+

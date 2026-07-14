@@ -16,7 +16,8 @@ html[data-theme="dark"] {
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
 .wrap { max-width: 620px; margin: 0 auto; padding: 30px 22px 70px; }
 
-.head { display: flex; gap: 12px; align-items: center; margin-bottom: 26px; }
+.head { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 26px; }
+.head__brand { display: flex; gap: 12px; align-items: center; }
 .head__title { margin: 0; font-size: 22px; font-weight: 770; letter-spacing: -0.02em; }
 .head__sub { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
 
@@ -50,7 +51,10 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f
 .switch input:checked + .switch__track::after { transform: translateX(18px); }
 .switch input:focus-visible + .switch__track { outline: 2px solid var(--brand); outline-offset: 2px; }
 
-.btn { font: inherit; font-weight: 650; font-size: 13px; cursor: pointer; border-radius: var(--radius-sm); border: 1px solid transparent; padding: 9px 14px; }
+.btn { font: inherit; font-weight: 650; font-size: 13px; cursor: pointer; border-radius: var(--radius-sm); border: 1px solid transparent; padding: 9px 14px; transition: background .15s ease, filter .15s ease; }
+.btn--sm { font-size: 12.5px; padding: 8px 12px; }
+.btn--ghost { background: var(--panel); color: var(--ink); border-color: var(--border); }
+.btn--ghost:hover { background: var(--panel-2); }
 .btn--del { background: color-mix(in srgb, var(--critical) 10%, var(--bg)); color: var(--critical); border-color: color-mix(in srgb, var(--critical) 28%, transparent); }
 .btn--del:hover { background: color-mix(in srgb, var(--critical) 16%, var(--bg)); }
 

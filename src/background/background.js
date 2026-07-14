@@ -163,10 +163,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ settings: await store.saveSettings(msg.settings) });
           break;
 
+        case 'DELETE_REPORT':
+          sendResponse({ reports: await store.deleteReport(String(msg.id || '')) });
+          break;
+
+        case 'CLEAR_REPORTS':
+          await store.clearReports();
+          sendResponse({ reports: [] });
+          break;
+
         case 'GET_REPORTS':
           sendResponse({ reports: await store.getReports() });
           break;
-
         case 'REPORT_SCAM': {
           const report = {
             id: uid(),

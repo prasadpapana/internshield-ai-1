@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scan history \u2014 InternShield AI</title>
+  <title>Scan history — InternShield AI</title>
   <link rel="stylesheet" href="history.css" />
 </head>
 <body>
@@ -17,15 +17,69 @@
           </svg>
         </span>
         <div>
-          <h1 class="head__title">Scan history</h1>
-          <p class="head__sub" id="countSub">\u2014</p>
+          <h1 class="head__title">Dashboard</h1>
+          <p class="head__sub" id="countSub">—</p>
         </div>
       </div>
-      <button class="btn btn--ghost btn--sm" id="clearAll">Clear all</button>
+      <div class="head__actions" style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn btn--ghost btn--sm" id="openSettings">Settings</button>
+        <button class="btn btn--ghost btn--sm" id="clearAll">Clear all</button>
+      </div>
     </header>
 
+    <!-- Analytics Section -->
+    <section class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <span class="stat-card__lbl">Total Scans</span>
+        <h2 class="stat-card__val" id="statTotalScans">0</h2>
+        <span class="stat-card__sub">All-time checks</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__lbl">Avg Trust Score</span>
+        <h2 class="stat-card__val" id="statAvgScore">0</h2>
+        <div class="stat-card__progress">
+          <div class="stat-card__progress-bar" id="statAvgProgressBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__lbl">Risky Postings</span>
+        <h2 class="stat-card__val text--warning" id="statRiskyCount">0</h2>
+        <span class="stat-card__sub">Caution / Scam risk</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__lbl">Reported Scams</span>
+        <h2 class="stat-card__val text--danger" id="statReportedCount">0</h2>
+        <span class="stat-card__sub">Manually flagged</span>
+      </div>
+    </section>
+
+    <!-- Risk Distribution Bar -->
+    <section class="dist-section" id="distSection">
+      <h3 class="section-title">Risk Profile</h3>
+      <div class="dist-bar" id="distBar">
+        <div class="dist-segment" data-level="safe" style="width: 0%" title="Legitimate: 0%"></div>
+        <div class="dist-segment" data-level="low" style="width: 0%" title="Probably fine: 0%"></div>
+        <div class="dist-segment" data-level="medium" style="width: 0%" title="Caution: 0%"></div>
+        <div class="dist-segment" data-level="high" style="width: 0%" title="High risk: 0%"></div>
+        <div class="dist-segment" data-level="critical" style="width: 0%" title="Likely scam: 0%"></div>
+      </div>
+      <div class="dist-legend">
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--safe)"></span>Legitimate (<span id="pctSafe">0%</span>)</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--low)"></span>Probably fine (<span id="pctLow">0%</span>)</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--medium)"></span>Caution (<span id="pctMedium">0%</span>)</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--high)"></span>High risk (<span id="pctHigh">0%</span>)</span>
+        <span class="legend-item"><span class="legend-dot" style="background-color: var(--critical)"></span>Likely scam (<span id="pctCritical">0%</span>)</span>
+      </div>
+    </section>
+
+    <!-- Tab Controls -->
+    <div class="tabs">
+      <button class="tab-btn tab-btn--active" id="tabScans" data-tab="scans">Scanned Jobs</button>
+      <button class="tab-btn" id="tabReports" data-tab="reports">Reported Scams</button>
+    </div>
+
     <div class="controls">
-      <input class="search" id="search" type="search" placeholder="Search company or job title\u2026" />
+      <input class="search" id="search" type="search" placeholder="Search company or job title…" />
       <div class="filters" id="filters">
         <button class="chip chip--active" data-risk="all">All</button>
         <button class="chip" data-risk="safe">Safe</button>
