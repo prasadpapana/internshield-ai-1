@@ -93,7 +93,7 @@ function maybeNotify(scan, settings) {
     chrome.notifications.create(`is_${scan.id}`, {
       type: 'basic',
       iconUrl: chrome.runtime.getURL("assets/icons/icon-48.png"),
-      title: `InternShield: ${scan.riskLabel}`,
+      title: `VeriHire: ${scan.riskLabel}`,
       message: `${scan.jobTitle} \u2014 trust ${scan.trustScore}/100, scam risk ${scan.scamProbability}%.`,
       priority: 1,
     });

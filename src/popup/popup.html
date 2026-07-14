@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="system">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>InternShield AI</title>
+  <title>VeriHire</title>
   <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
   <div class="app" id="app" data-state="idle">
 
@@ -14,32 +16,34 @@
       <div class="brand">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z"
-                  fill="url(#g)" />
-            <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8"
-                  stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="url(#g)" />
+            <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
             <defs>
-              <linearGradient id="g" x1="4" y1="2" x2="20" y2="22"
-                              gradientUnits="userSpaceOnUse">
-                <stop stop-color="#5B5BF0" /><stop offset="1" stop-color="#7C3AED" />
+              <linearGradient id="g" x1="4" y1="2" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#5B5BF0" />
+                <stop offset="1" stop-color="#7C3AED" />
               </linearGradient>
             </defs>
           </svg>
         </span>
-        <span class="brand__name">InternShield<span class="brand__ai"> AI</span></span>
+        <span class="brand__name">VeriHire</span>
       </div>
       <nav class="topbar__nav">
         <button class="iconbtn" id="openHistory" title="Scan history" aria-label="Scan history">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 4v4h4" /><path d="M12 8v4l3 2" />
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <path d="M3 4v4h4" />
+            <path d="M12 8v4l3 2" />
           </svg>
         </button>
         <button class="iconbtn" id="openSettings" title="Settings" aria-label="Settings">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 6 8.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 18 6l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+            <path
+              d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 6 8.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 18 6l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
           </svg>
         </button>
       </nav>
@@ -56,9 +60,8 @@
               <circle class="ring__idle" cx="60" cy="60" r="52" />
             </svg>
             <div class="hero__ringicon">
-              <svg viewBox="0 0 24 24" width="34" height="34" fill="none"
-                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-                   stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
               </svg>
             </div>
@@ -142,9 +145,11 @@
       <!-- ERROR -->
       <section class="panel panel--error" data-panel="error">
         <div class="errbox">
-          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor"
-               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" /><path d="M12 8v5" /><path d="M12 16h.01" />
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5" />
+            <path d="M12 16h.01" />
           </svg>
           <p class="errbox__msg" id="errorMsg">Something went wrong.</p>
           <button class="btn btn--primary" id="retryBtn">Try again</button>
@@ -162,7 +167,7 @@
         connect a backend in Settings.</p>
       <label class="modal__label" for="reportReason">What looks wrong? (optional)</label>
       <textarea class="modal__input" id="reportReason" rows="3"
-                placeholder="e.g. asked for a registration fee over WhatsApp"></textarea>
+        placeholder="e.g. asked for a registration fee over WhatsApp"></textarea>
       <div class="modal__actions">
         <button class="btn btn--ghost" id="reportCancel">Cancel</button>
         <button class="btn btn--danger" id="reportSubmit">Save report</button>
@@ -172,4 +177,5 @@
 
   <script type="module" src="popup.js"></script>
 </body>
+
 </html>
