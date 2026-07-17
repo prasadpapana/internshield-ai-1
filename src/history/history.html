@@ -3,103 +3,300 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scan history — InternShield AI</title>
+  <title>Dashboard — InternShield AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="history.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header class="head">
-      <div class="head__brand">
-        <span class="head__mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="#4f46e5" />
+  <div class="layout">
+
+    <!-- ═══════════ SIDEBAR ═══════════ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <span class="sidebar__logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" fill="url(#sg)" />
             <path d="m8.5 12 2.4 2.5L15.8 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="sg" x1="4" y1="2" x2="20" y2="22" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#6366f1" />
+                <stop offset="1" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
           </svg>
         </span>
-        <div>
-          <h1 class="head__title">Dashboard</h1>
-          <p class="head__sub" id="countSub">—</p>
+        <span class="sidebar__name">InternShield</span>
+      </div>
+
+      <nav class="sidebar__nav">
+        <a class="nav-item nav-item--active" id="navDashboard" href="#" data-view="dashboard">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-item" id="navScans" href="#" data-view="scans">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+            <path d="m8.5 12 2.4 2.5L15.8 9.5" />
+          </svg>
+          <span>Scanned Jobs</span>
+        </a>
+        <a class="nav-item" id="navReports" href="#" data-view="reports">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            <path d="M12 9v4" /><path d="M12 17h.01" />
+          </svg>
+          <span>Reported Scams</span>
+        </a>
+        <a class="nav-item" id="navSettings" href="#">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15H4.5a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 6 8.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 4.6V4.5a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 18 6l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+          </svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar__bottom">
+        <div class="sidebar__version">v1.0.0 · On-device</div>
+      </div>
+    </aside>
+
+    <!-- ═══════════ MAIN ═══════════ -->
+    <div class="main">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="topbar__toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 12h18" /><path d="M3 6h18" /><path d="M3 18h18" />
+          </svg>
+        </button>
+        <div class="topbar__search">
+          <svg class="topbar__search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input class="topbar__search-input" id="search" type="search" placeholder="Search anything…" />
         </div>
-      </div>
-      <div class="head__actions" style="display: flex; gap: 8px; align-items: center;">
-        <button class="btn btn--ghost btn--sm" id="openSettings">Settings</button>
-        <button class="btn btn--ghost btn--sm" id="clearAll">Clear all</button>
-      </div>
-    </header>
-
-    <!-- Analytics Section -->
-    <section class="stats-grid" id="statsGrid">
-      <div class="stat-card">
-        <span class="stat-card__lbl">Total Scans</span>
-        <h2 class="stat-card__val" id="statTotalScans">0</h2>
-        <span class="stat-card__sub">All-time checks</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__lbl">Avg Trust Score</span>
-        <h2 class="stat-card__val" id="statAvgScore">0</h2>
-        <div class="stat-card__progress">
-          <div class="stat-card__progress-bar" id="statAvgProgressBar" style="width: 0%"></div>
+        <div class="topbar__right">
+          <span class="topbar__greeting" id="greeting">Hi, User</span>
+          <div class="topbar__avatar">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
         </div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__lbl">Risky Postings</span>
-        <h2 class="stat-card__val text--warning" id="statRiskyCount">0</h2>
-        <span class="stat-card__sub">Caution / Scam risk</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__lbl">Reported Scams</span>
-        <h2 class="stat-card__val text--danger" id="statReportedCount">0</h2>
-        <span class="stat-card__sub">Manually flagged</span>
-      </div>
-    </section>
+      </header>
 
-    <!-- Risk Distribution Bar -->
-    <section class="dist-section" id="distSection">
-      <h3 class="section-title">Risk Profile</h3>
-      <div class="dist-bar" id="distBar">
-        <div class="dist-segment" data-level="safe" style="width: 0%" title="Legitimate: 0%"></div>
-        <div class="dist-segment" data-level="low" style="width: 0%" title="Probably fine: 0%"></div>
-        <div class="dist-segment" data-level="medium" style="width: 0%" title="Caution: 0%"></div>
-        <div class="dist-segment" data-level="high" style="width: 0%" title="High risk: 0%"></div>
-        <div class="dist-segment" data-level="critical" style="width: 0%" title="Likely scam: 0%"></div>
-      </div>
-      <div class="dist-legend">
-        <span class="legend-item"><span class="legend-dot" style="background-color: var(--safe)"></span>Legitimate (<span id="pctSafe">0%</span>)</span>
-        <span class="legend-item"><span class="legend-dot" style="background-color: var(--low)"></span>Probably fine (<span id="pctLow">0%</span>)</span>
-        <span class="legend-item"><span class="legend-dot" style="background-color: var(--medium)"></span>Caution (<span id="pctMedium">0%</span>)</span>
-        <span class="legend-item"><span class="legend-dot" style="background-color: var(--high)"></span>High risk (<span id="pctHigh">0%</span>)</span>
-        <span class="legend-item"><span class="legend-dot" style="background-color: var(--critical)"></span>Likely scam (<span id="pctCritical">0%</span>)</span>
-      </div>
-    </section>
+      <!-- ═══════════ DASHBOARD VIEW ═══════════ -->
+      <section class="view view--active" id="viewDashboard" data-view="dashboard">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Dashboard</h1>
+            <p class="view__sub" id="countSub">—</p>
+          </div>
+          <div class="view__actions">
+            <button class="btn-action btn-action--outline" id="exportBtn">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export
+            </button>
+            <button class="btn-action btn-action--danger" id="clearAll">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+              Clear All
+            </button>
+          </div>
+        </div>
 
-    <!-- Tab Controls -->
-    <div class="tabs">
-      <button class="tab-btn tab-btn--active" id="tabScans" data-tab="scans">Scanned Jobs</button>
-      <button class="tab-btn" id="tabReports" data-tab="reports">Reported Scams</button>
-    </div>
+        <!-- Stats Cards -->
+        <section class="stats-grid" id="statsGrid">
+          <div class="stat-card stat-card--brand">
+            <div class="stat-card__icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+              </svg>
+            </div>
+            <span class="stat-card__lbl">Total Scans</span>
+            <h2 class="stat-card__val" id="statTotalScans">0</h2>
+            <span class="stat-card__sub">All-time checks</span>
+          </div>
+          <div class="stat-card stat-card--success">
+            <div class="stat-card__icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <span class="stat-card__lbl">Avg Trust Score</span>
+            <h2 class="stat-card__val" id="statAvgScore">0</h2>
+            <div class="stat-card__progress">
+              <div class="stat-card__progress-bar" id="statAvgProgressBar" style="width: 0%"></div>
+            </div>
+          </div>
+          <div class="stat-card stat-card--warning">
+            <div class="stat-card__icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <span class="stat-card__lbl">Risky Postings</span>
+            <h2 class="stat-card__val" id="statRiskyCount">0</h2>
+            <span class="stat-card__sub">Caution / Scam risk</span>
+          </div>
+          <div class="stat-card stat-card--danger">
+            <div class="stat-card__icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <span class="stat-card__lbl">Reported Scams</span>
+            <h2 class="stat-card__val" id="statReportedCount">0</h2>
+            <span class="stat-card__sub">Manually flagged</span>
+          </div>
+        </section>
 
-    <div class="controls">
-      <input class="search" id="search" type="search" placeholder="Search company or job title…" />
-      <div class="filters" id="filters">
-        <button class="chip chip--active" data-risk="all">All</button>
-        <button class="chip" data-risk="safe">Safe</button>
-        <button class="chip" data-risk="low">Low</button>
-        <button class="chip" data-risk="medium">Caution</button>
-        <button class="chip" data-risk="high">High</button>
-        <button class="chip" data-risk="critical">Scam</button>
-      </div>
-    </div>
+        <!-- Risk Distribution Bar -->
+        <section class="dist-section" id="distSection">
+          <h3 class="section-title">Risk Profile</h3>
+          <div class="dist-bar" id="distBar">
+            <div class="dist-segment" data-level="safe" style="width: 0%" title="Legitimate: 0%"></div>
+            <div class="dist-segment" data-level="low" style="width: 0%" title="Probably fine: 0%"></div>
+            <div class="dist-segment" data-level="medium" style="width: 0%" title="Caution: 0%"></div>
+            <div class="dist-segment" data-level="high" style="width: 0%" title="High risk: 0%"></div>
+            <div class="dist-segment" data-level="critical" style="width: 0%" title="Likely scam: 0%"></div>
+          </div>
+          <div class="dist-legend">
+            <span class="legend-item"><span class="legend-dot" data-level="safe"></span>Legitimate (<span id="pctSafe">0%</span>)</span>
+            <span class="legend-item"><span class="legend-dot" data-level="low"></span>Probably fine (<span id="pctLow">0%</span>)</span>
+            <span class="legend-item"><span class="legend-dot" data-level="medium"></span>Caution (<span id="pctMedium">0%</span>)</span>
+            <span class="legend-item"><span class="legend-dot" data-level="high"></span>High risk (<span id="pctHigh">0%</span>)</span>
+            <span class="legend-item"><span class="legend-dot" data-level="critical"></span>Likely scam (<span id="pctCritical">0%</span>)</span>
+          </div>
+        </section>
 
-    <ul class="list" id="list"></ul>
+        <!-- Kanban Columns -->
+        <section class="kanban-section">
+          <div class="kanban-header">
+            <h3 class="section-title">Scanned Jobs</h3>
+            <div class="kanban-filters" id="filters">
+              <button class="filter-chip filter-chip--active" data-risk="all">All</button>
+              <button class="filter-chip" data-risk="safe">Safe</button>
+              <button class="filter-chip" data-risk="low">Low</button>
+              <button class="filter-chip" data-risk="medium">Caution</button>
+              <button class="filter-chip" data-risk="high">High</button>
+              <button class="filter-chip" data-risk="critical">Scam</button>
+            </div>
+          </div>
+          <div class="kanban" id="kanban">
+            <div class="kanban__col" data-level="safe">
+              <div class="kanban__col-head">
+                <span class="kanban__col-dot" data-level="safe"></span>
+                <span class="kanban__col-title">Safe</span>
+                <span class="kanban__col-count" id="colCountSafe">0</span>
+              </div>
+              <div class="kanban__col-body" id="colSafe"></div>
+            </div>
+            <div class="kanban__col" data-level="low">
+              <div class="kanban__col-head">
+                <span class="kanban__col-dot" data-level="low"></span>
+                <span class="kanban__col-title">Low Risk</span>
+                <span class="kanban__col-count" id="colCountLow">0</span>
+              </div>
+              <div class="kanban__col-body" id="colLow"></div>
+            </div>
+            <div class="kanban__col" data-level="medium">
+              <div class="kanban__col-head">
+                <span class="kanban__col-dot" data-level="medium"></span>
+                <span class="kanban__col-title">Caution</span>
+                <span class="kanban__col-count" id="colCountMedium">0</span>
+              </div>
+              <div class="kanban__col-body" id="colMedium"></div>
+            </div>
+            <div class="kanban__col" data-level="high">
+              <div class="kanban__col-head">
+                <span class="kanban__col-dot" data-level="high"></span>
+                <span class="kanban__col-title">High Risk</span>
+                <span class="kanban__col-count" id="colCountHigh">0</span>
+              </div>
+              <div class="kanban__col-body" id="colHigh"></div>
+            </div>
+            <div class="kanban__col" data-level="critical">
+              <div class="kanban__col-head">
+                <span class="kanban__col-dot" data-level="critical"></span>
+                <span class="kanban__col-title">Likely Scam</span>
+                <span class="kanban__col-count" id="colCountCritical">0</span>
+              </div>
+              <div class="kanban__col-body" id="colCritical"></div>
+            </div>
+          </div>
+        </section>
 
-    <div class="empty" id="empty" hidden>
-      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
-      </svg>
-      <p class="empty__title" id="emptyTitle">No scans yet</p>
-      <p class="empty__sub" id="emptySub">Open a job posting and run a scan from the toolbar to see it here.</p>
-    </div>
-  </div>
+        <!-- Empty state -->
+        <div class="empty" id="empty" hidden>
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+          </svg>
+          <p class="empty__title" id="emptyTitle">No scans yet</p>
+          <p class="empty__sub" id="emptySub">Open a job posting and run a scan from the toolbar to see it here.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ SCANS LIST VIEW ═══════════ -->
+      <section class="view" id="viewScans" data-view="scans">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Scanned Jobs</h1>
+            <p class="view__sub" id="scansCountSub">—</p>
+          </div>
+        </div>
+        <div class="list-controls">
+          <div class="kanban-filters" id="listFilters">
+            <button class="filter-chip filter-chip--active" data-risk="all">All</button>
+            <button class="filter-chip" data-risk="safe">Safe</button>
+            <button class="filter-chip" data-risk="low">Low</button>
+            <button class="filter-chip" data-risk="medium">Caution</button>
+            <button class="filter-chip" data-risk="high">High</button>
+            <button class="filter-chip" data-risk="critical">Scam</button>
+          </div>
+        </div>
+        <ul class="list" id="list"></ul>
+        <div class="empty" id="emptyScans" hidden>
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
+          </svg>
+          <p class="empty__title" id="emptyScansTitle">No scans yet</p>
+          <p class="empty__sub" id="emptyScansSub">Open a job posting and run a scan from the toolbar to see it here.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ REPORTS LIST VIEW ═══════════ -->
+      <section class="view" id="viewReports" data-view="reports">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Reported Scams</h1>
+            <p class="view__sub" id="reportsCountSub">—</p>
+          </div>
+        </div>
+        <ul class="list" id="reportsList"></ul>
+        <div class="empty" id="emptyReports" hidden>
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+            <path d="M12 9v4" /><path d="M12 17h.01" />
+          </svg>
+          <p class="empty__title" id="emptyReportsTitle">No reports yet</p>
+          <p class="empty__sub" id="emptyReportsSub">When you scan a job and click "Report scam", it will show up here.</p>
+        </div>
+      </section>
+
+    </div><!-- .main -->
+  </div><!-- .layout -->
 
   <script type="module" src="history.js"></script>
 </body>

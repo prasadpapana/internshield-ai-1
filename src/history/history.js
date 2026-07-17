@@ -13,7 +13,7 @@ const RISK = {
 const $ = (id) => document.getElementById(id);
 let all = [];
 let reports = [];
-let activeTab = 'scans';
+let activeView = 'dashboard';
 let filterRisk = 'all';
 let query = '';
 
@@ -56,6 +56,11 @@ function updateStats() {
 
   // Reported scams
   $('statReportedCount').textContent = String(reports.length);
+
+  // Subtitle count
+  $('countSub').textContent = total === 0
+    ? 'No scans stored yet'
+    : `${total} scan${total === 1 ? '' : 's'} stored on this device`;
 
   // Risk Distribution Bar percentages
   const counts = { safe: 0, low: 0, medium: 0, high: 0, critical: 0 };
@@ -101,48 +106,170 @@ function visibleReports() {
 }
 
 function render() {
+  if (activeView === 'dashboard') {
+    renderKanban();
+  } else if (activeView === 'scans') {
+    renderScansList();
+  } else if (activeView === 'reports') {
+    renderReportsList();
+  }
+}
+
+function renderKanban() {
+  const levels = ['safe', 'low', 'medium', 'high', 'critical'];
+  const cols = {
+    safe: $('colSafe'),
+    low: $('colLow'),
+    medium: $('colMedium'),
+    high: $('colHigh'),
+    critical: $('colCritical')
+  };
+
+  // Clear columns
+  for (const level of levels) {
+    if (cols[level]) cols[level].replaceChildren();
+  }
+
+  const items = visibleScans();
+  const counts = { safe: 0, low: 0, medium: 0, high: 0, critical: 0 };
+
+  for (const scan of items) {
+    const level = scan.riskLevel;
+    if (cols[level]) {
+      cols[level].appendChild(kcard(scan));
+      counts[level]++;
+    }
+  }
+
+  // Update counts
+  $('colCountSafe').textContent = counts.safe;
+  $('colCountLow').textContent = counts.low;
+  $('colCountMedium').textContent = counts.medium;
+  $('colCountHigh').textContent = counts.high;
+  $('colCountCritical').textContent = counts.critical;
+
+  const totalFiltered = items.length;
+  if (totalFiltered === 0 && all.length > 0) {
+    $('empty').hidden = false;
+    $('emptyTitle').textContent = 'No matches';
+    $('emptySub').textContent = 'Try a different search or filter.';
+    $('kanban').style.display = 'none';
+  } else if (all.length === 0) {
+    $('empty').hidden = false;
+    $('emptyTitle').textContent = 'No scans yet';
+    $('emptySub').textContent = 'Open a job posting and run a scan from the toolbar to see it here.';
+    $('kanban').style.display = 'none';
+  } else {
+    $('empty').hidden = true;
+    $('kanban').style.display = 'grid';
+  }
+}
+
+function renderScansList() {
   const list = $('list');
   list.replaceChildren();
 
-  if (activeTab === 'scans') {
-    $('clearAll').style.display = all.length === 0 ? 'none' : '';
-    $('filters').style.display = 'flex';
-    $('countSub').textContent = all.length === 0
-      ? 'No scans stored yet'
-      : `${all.length} scan${all.length === 1 ? '' : 's'} stored on this device`;
-    
-    const items = visibleScans();
-    if (items.length === 0) {
-      $('empty').hidden = false;
-      $('emptyTitle').textContent = all.length > 0 ? 'No matches' : 'No scans yet';
-      $('emptySub').textContent = all.length > 0 
-        ? 'Try a different search or filter.' 
-        : 'Open a job posting and run a scan from the toolbar to see it here.';
-      return;
-    }
-    $('empty').hidden = true;
-    for (const scan of items) list.appendChild(card(scan));
+  const items = visibleScans();
+  $('scansCountSub').textContent = all.length === 0
+    ? 'No scans stored yet'
+    : `${all.length} scan${all.length === 1 ? '' : 's'} stored on this device`;
 
-  } else {
-    // Reports tab
-    $('clearAll').style.display = reports.length === 0 ? 'none' : '';
-    $('filters').style.display = 'none';
-    $('countSub').textContent = reports.length === 0
-      ? 'No scams manually reported yet'
-      : `${reports.length} scam report${reports.length === 1 ? '' : 's'} stored`;
-
-    const items = visibleReports();
-    if (items.length === 0) {
-      $('empty').hidden = false;
-      $('emptyTitle').textContent = reports.length > 0 ? 'No matches' : 'No reports yet';
-      $('emptySub').textContent = reports.length > 0
-        ? 'Try a different search query.'
-        : 'When you scan a job and click "Report scam", it will show up here.';
-      return;
-    }
-    $('empty').hidden = true;
-    for (const report of items) list.appendChild(reportCard(report));
+  if (items.length === 0) {
+    $('emptyScans').hidden = false;
+    $('emptyScansTitle').textContent = all.length > 0 ? 'No matches' : 'No scans yet';
+    $('emptyScansSub').textContent = all.length > 0
+      ? 'Try a different search or filter.'
+      : 'Open a job posting and run a scan from the toolbar to see it here.';
+    return;
   }
+  $('emptyScans').hidden = true;
+  for (const scan of items) {
+    list.appendChild(card(scan));
+  }
+}
+
+function renderReportsList() {
+  const list = $('reportsList');
+  list.replaceChildren();
+
+  const items = visibleReports();
+  $('reportsCountSub').textContent = reports.length === 0
+    ? 'No scams manually reported yet'
+    : `${reports.length} scam report${reports.length === 1 ? '' : 's'} stored`;
+
+  if (items.length === 0) {
+    $('emptyReports').hidden = false;
+    $('emptyReportsTitle').textContent = reports.length > 0 ? 'No matches' : 'No reports yet';
+    $('emptyReportsSub').textContent = reports.length > 0
+      ? 'Try a different search query.'
+      : 'When you scan a job and click "Report scam", it will show up here.';
+    return;
+  }
+  $('emptyReports').hidden = true;
+  for (const report of items) {
+    list.appendChild(reportCard(report));
+  }
+}
+
+function kcard(scan) {
+  const risk = RISK[scan.riskLevel] || RISK.medium;
+  const cardEl = document.createElement('div');
+  cardEl.className = 'kcard';
+
+  const company = document.createElement('div');
+  company.className = 'kcard__company';
+  company.textContent = scan.company;
+
+  const title = document.createElement('div');
+  title.className = 'kcard__title';
+  title.textContent = scan.jobTitle;
+
+  const meta = document.createElement('div');
+  meta.className = 'kcard__meta';
+
+  const score = document.createElement('span');
+  score.className = 'kcard__score';
+  score.style.background = risk.color;
+  score.textContent = scan.trustScore;
+
+  const date = document.createElement('span');
+  date.className = 'kcard__date';
+  date.textContent = formatDate(scan.date);
+
+  meta.append(score, date);
+
+  cardEl.append(company, title, meta);
+
+  if (scan.url) {
+    const url = document.createElement('a');
+    url.className = 'kcard__url';
+    url.href = scan.url;
+    url.target = '_blank';
+    url.rel = 'noopener noreferrer';
+    url.textContent = scan.url;
+    url.addEventListener('click', (e) => e.stopPropagation());
+    cardEl.appendChild(url);
+  }
+
+  cardEl.addEventListener('click', () => {
+    // Switch to Scans List view and scroll/open the specific card
+    switchView('scans');
+    setTimeout(() => {
+      // Find the card in list view
+      const cards = document.querySelectorAll('#list .card');
+      for (const c of cards) {
+        const titleEl = c.querySelector('.card__title');
+        const companyEl = c.querySelector('.card__company');
+        if (titleEl && titleEl.textContent === scan.jobTitle && companyEl && companyEl.textContent === scan.company) {
+          c.dataset.open = 'true';
+          c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }, 150);
+  });
+
+  return cardEl;
 }
 
 function makeList(parent, items, cls) {
@@ -191,7 +318,7 @@ function card(scan) {
   const pill = document.createElement('span');
   pill.className = 'card__pill';
   pill.style.color = risk.color;
-  pill.style.background = `color-mix(in srgb, ${risk.color} 14%, var(--bg))`;
+  pill.style.background = `color-mix(in srgb, ${risk.color} 14%, var(--panel))`;
   pill.textContent = risk.label;
   const date = document.createElement('span'); date.className = 'card__date'; date.textContent = formatDate(scan.date);
   right.append(pill, date);
@@ -277,7 +404,7 @@ function reportCard(report) {
   const pill = document.createElement('span');
   pill.className = 'card__pill';
   pill.style.color = risk.color;
-  pill.style.background = `color-mix(in srgb, ${risk.color} 14%, var(--bg))`;
+  pill.style.background = `color-mix(in srgb, ${risk.color} 14%, var(--panel))`;
   pill.textContent = risk.label;
   const date = document.createElement('span'); date.className = 'card__date'; date.textContent = formatDate(report.reportedAt);
   right.append(pill, date);
@@ -287,7 +414,7 @@ function reportCard(report) {
   const body = document.createElement('div');
   body.className = 'card__body';
   body.style.display = 'block';
-  body.style.padding = '12px 16px 16px';
+  body.style.padding = '12px 18px 18px';
 
   const reasonEl = document.createElement('div');
   reasonEl.className = 'report-reason';
@@ -330,53 +457,124 @@ function reportCard(report) {
   return li;
 }
 
+function switchView(viewName) {
+  activeView = viewName;
+  
+  // Update view visibility
+  document.querySelectorAll('.view').forEach((v) => {
+    v.classList.toggle('view--active', v.dataset.view === viewName);
+  });
+
+  // Update navigation items active state
+  document.querySelectorAll('.nav-item').forEach((item) => {
+    const isActive = item.dataset.view === viewName;
+    item.classList.toggle('nav-item--active', isActive);
+  });
+
+  render();
+}
+
+function exportToCSV() {
+  if (all.length === 0) {
+    alert('No data to export.');
+    return;
+  }
+  const headers = ['Date', 'Company', 'Job Title', 'Trust Score', 'Scam Risk %', 'Risk Level', 'Recommendation', 'URL'];
+  const rows = all.map(s => [
+    new Date(s.date).toLocaleDateString(),
+    `"${s.company.replace(/"/g, '""')}"`,
+    `"${s.jobTitle.replace(/"/g, '""')}"`,
+    s.trustScore,
+    s.scamProbability,
+    s.riskLevel,
+    `"${(s.recommendation || '').replace(/"/g, '""')}"`,
+    s.url
+  ]);
+
+  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `internshield_scans_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 function init() {
   applyTheme();
-  $('search').addEventListener('input', (e) => { query = e.target.value.trim().toLowerCase(); render(); });
   
-  $('openSettings').addEventListener('click', () => {
+  // Search input listeners
+  $('search').addEventListener('input', (e) => {
+    query = e.target.value.trim().toLowerCase();
+    render();
+  });
+
+  // Sidebar navigation switching
+  document.querySelectorAll('.nav-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      const view = item.dataset.view;
+      if (view) {
+        e.preventDefault();
+        switchView(view);
+        // On mobile, close sidebar automatically on navigation
+        $('sidebar').classList.remove('sidebar--open');
+      }
+    });
+  });
+
+  // Mobile sidebar toggle
+  $('sidebarToggle').addEventListener('click', () => {
+    $('sidebar').classList.toggle('sidebar--open');
+  });
+
+  // Settings page navigation
+  $('navSettings').addEventListener('click', (e) => {
+    e.preventDefault();
     if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();
     else chrome.tabs.create({ url: chrome.runtime.getURL('src/settings/settings.html') });
   });
-  
+
+  // Kanban Filter Chips listener
   $('filters').addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip');
+    const btn = e.target.closest('.filter-chip');
     if (!btn) return;
     filterRisk = btn.dataset.risk;
-    document.querySelectorAll('.chip').forEach((c) => c.classList.toggle('chip--active', c === btn));
+    document.querySelectorAll('#filters .filter-chip').forEach((c) => c.classList.toggle('filter-chip--active', c === btn));
     render();
   });
 
-  // Tab switching
-  $('tabScans').addEventListener('click', () => {
-    activeTab = 'scans';
-    $('tabScans').classList.add('tab-btn--active');
-    $('tabReports').classList.remove('tab-btn--active');
+  // List view filter chips listener
+  $('listFilters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-chip');
+    if (!btn) return;
+    filterRisk = btn.dataset.risk;
+    document.querySelectorAll('#listFilters .filter-chip').forEach((c) => c.classList.toggle('filter-chip--active', c === btn));
     render();
   });
 
-  $('tabReports').addEventListener('click', () => {
-    activeTab = 'reports';
-    $('tabReports').classList.add('tab-btn--active');
-    $('tabScans').classList.remove('tab-btn--active');
-    render();
-  });
+  // Export action
+  $('exportBtn').addEventListener('click', exportToCSV);
 
+  // Clear all button action
   $('clearAll').addEventListener('click', async () => {
-    if (activeTab === 'scans') {
-      if (!all.length) return;
-      if (!confirm('Delete all stored scans? This cannot be undone.')) return;
-      await send({ type: 'CLEAR_HISTORY' });
-      all = [];
-    } else {
+    if (activeView === 'reports') {
       if (!reports.length) return;
       if (!confirm('Delete all scam reports? This cannot be undone.')) return;
       await send({ type: 'CLEAR_REPORTS' });
       reports = [];
+    } else {
+      if (!all.length) return;
+      if (!confirm('Delete all stored scans? This cannot be undone.')) return;
+      await send({ type: 'CLEAR_HISTORY' });
+      all = [];
     }
     updateStats();
     render();
   });
+
   load();
 }
 
