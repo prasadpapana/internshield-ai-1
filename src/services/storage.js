@@ -137,6 +137,18 @@ export async function clearReports() {
   await chrome.storage.local.set({
     [STORAGE_KEYS.REPORTS]: await encryptJson([]),
   });
+}export async function saveHistory(list) {
+  const trimmed = list.slice(0, LIMITS.HISTORY_MAX);
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.HISTORY]: await encryptJson(trimmed),
+  });
+  return trimmed;
 }
 
-
+export async function saveReports(list) {
+  const trimmed = list.slice(0, LIMITS.REPORTS_MAX);
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.REPORTS]: await encryptJson(trimmed),
+  });
+  return trimmed;
+}

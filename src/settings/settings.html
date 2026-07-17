@@ -85,6 +85,25 @@
       </div>
     </section>
 
+    <section class="group">
+      <h2 class="group__h">Backup &amp; recovery</h2>
+      <div class="row">
+        <div class="row__text">
+          <span class="row__label">Export backup</span>
+          <span class="row__hint">Download a JSON file containing all settings, scan history, and scam reports.</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="exportBackup">Export JSON</button>
+      </div>
+      <div class="row">
+        <div class="row__text">
+          <span class="row__label">Import backup</span>
+          <span class="row__hint">Restore settings, scans, and reports from a previously exported JSON backup file.</span>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="importBackupBtn">Import JSON</button>
+        <input type="file" id="importFile" accept=".json" style="display: none;" />
+      </div>
+    </section>
+
     <section class="group group--danger">
       <h2 class="group__h">Your data</h2>
       <div class="row">

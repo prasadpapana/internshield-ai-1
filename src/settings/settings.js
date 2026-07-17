@@ -1,5 +1,5 @@
 // src/settings/settings.js
-import { getSettings, getHistory, getReports } from '../services/storage.js';
+import { getSettings, getHistory, getReports, saveSettings, saveHistory, saveReports } from '../services/storage.js';
 
 const $ = (id) => document.getElementById(id);
 let settings = null;
@@ -86,7 +86,90 @@ async function init() {
     location.reload();
   });
 
+  // Backup & Recovery Handlers
+  $('exportBackup').addEventListener('click', async () => {
+    try {
+      const [hist, reps, currentSettings] = await Promise.all([
+        getHistory(),
+        getReports(),
+        getSettings()
+      ]);
+      const backup = {
+        version: 1,
+        generator: 'InternShield AI',
+        exportedAt: new Date().toISOString(),
+        settings: currentSettings,
+        history: hist,
+        reports: reps
+      };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `internshield_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Failed to export backup: ' + err.message);
+    }
+  });
+
+  $('importBackupBtn').addEventListener('click', () => {
+    $('importFile').click();
+  });
+
+  $('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const backup = JSON.parse(evt.target.result);
+        if (!backup || typeof backup !== 'object') {
+          throw new Error('Invalid file format. Backup must be a JSON object.');
+        }
+
+        // Basic validation
+        const hasSettings = backup.settings && typeof backup.settings === 'object';
+        const hasHistory = Array.isArray(backup.history);
+        const hasReports = Array.isArray(backup.reports);
+
+        if (!hasSettings && !hasHistory && !hasReports) {
+          throw new Error('No valid settings, history, or reports data found in the backup file.');
+        }
+
+        if (!confirm('Restore settings and data from this backup? Current data will be overwritten/merged.')) {
+          // Clear file input
+          e.target.value = '';
+          return;
+        }
+
+        if (hasSettings) {
+          await saveSettings(backup.settings);
+        }
+        if (hasHistory) {
+          await saveHistory(backup.history);
+        }
+        if (hasReports) {
+          await saveReports(backup.reports);
+        }
+
+        alert('Backup restored successfully!');
+        location.reload();
+      } catch (err) {
+        alert('Failed to import backup: ' + err.message);
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  });
+
   refreshStats();
 }
 
 init();
+
