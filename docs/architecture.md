@@ -1,4 +1,4 @@
-# VeriHire AI — Architecture
+# InternShield AI — Architecture
 
 This document covers the planning and design phases behind the extension:
 product analysis, system architecture, the scoring model, data models, the
@@ -21,7 +21,7 @@ boards, LinkedIn posts, company pages, and links shared on messaging apps.
 red flags matter; feel time pressure; embarrassed to ask; no easy second
 opinion at the moment of decision.
 
-**User journey.** Find posting → uncertain → open VeriHire → one click scan
+**User journey.** Find posting → uncertain → open InternShield → one click scan
 → get a trust score, the specific reasons, and a plain recommendation → decide
 → optionally save/report it.
 

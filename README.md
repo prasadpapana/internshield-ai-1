@@ -1,2 +1,2 @@
-# verihire-ai
+# internshield-ai
 For internship scam

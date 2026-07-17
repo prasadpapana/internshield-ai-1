@@ -1,6 +1,6 @@
-# VeriHire AI — Backend API Contract
+# InternShield AI — Backend API Contract
 
-> **The backend is optional.** VeriHire AI runs entirely on-device. Every
+> **The backend is optional.** InternShield AI runs entirely on-device. Every
 > scan, score, and history entry works with zero network access. A backend adds
 > three things and nothing else:
 >
@@ -17,7 +17,7 @@
 
 Google Apps Script Web Apps expose exactly one HTTP entry point per deployment
 (`doGet` / `doPost` at a single `/exec` URL). They cannot serve REST-style paths
-like `/scan` or `/history`. VeriHire therefore uses a **single POST endpoint
+like `/scan` or `/history`. InternShield therefore uses a **single POST endpoint
 with an action envelope**. The five logical endpoints in the architecture brief
 (`/scan`, `/history`, `/report`, `/company`, `/settings`) are expressed as
 `action` values, documented below.
@@ -260,7 +260,7 @@ App ("Execute as: Me", "Who has access: Anyone"). Paste the resulting `/exec` UR
 into **Settings → Backend URL**.
 
 ```javascript
-// Code.gs — VeriHire AI reference backend (optional)
+// Code.gs — InternShield AI reference backend (optional)
 const SHEET_ID = 'PUT_A_SPREADSHEET_ID_HERE'; // tabs: scans, reports
 
 function doPost(e) {
@@ -276,7 +276,7 @@ function doPost(e) {
 }
 
 function doGet() {
-  return json({ ok: true, data: { service: 'VeriHire AI', status: 'up' } });
+  return json({ ok: true, data: { service: 'InternShield AI', status: 'up' } });
 }
 
 function route(action, p) {

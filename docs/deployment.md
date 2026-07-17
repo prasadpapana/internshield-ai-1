@@ -1,4 +1,4 @@
-# VeriHire AI — Deployment Guide
+# InternShield AI — Deployment Guide
 
 Covers (1) loading the extension locally for development, (2) optional backend
 setup, and (3) publishing to the Chrome Web Store.
@@ -12,8 +12,8 @@ No build step. The source **is** the extension.
 1. Open `chrome://extensions` in Chrome (or any Chromium browser: Edge, Brave, Arc).
 2. Toggle **Developer mode** on (top-right).
 3. Click **Load unpacked**.
-4. Select the `verihire-ai/` folder (the one containing `manifest.json`).
-5. The VeriHire AI shield icon appears in the toolbar. Pin it for convenience.
+4. Select the `internshield-ai/` folder (the one containing `manifest.json`).
+5. The InternShield AI shield icon appears in the toolbar. Pin it for convenience.
 
 ### Try it
 
@@ -25,7 +25,7 @@ No build step. The source **is** the extension.
 ### Reload after edits
 
 After changing any file, return to `chrome://extensions` and click the **reload**
-↻ icon on the VeriHire AI card. Changes to the popup/settings/history HTML
+↻ icon on the InternShield AI card. Changes to the popup/settings/history HTML
 take effect on next open; changes to the background worker or content script take
 effect after reload.
 
@@ -71,20 +71,20 @@ down or misconfigured, scanning continues to work locally with no visible error.
 Create a ZIP whose **root contains `manifest.json`** (not a parent folder).
 
 ```bash
-cd verihire-ai
-zip -r ../verihire-ai.zip . -x '*.DS_Store' -x '__MACOSX/*'
+cd internshield-ai
+zip -r ../internshield-ai.zip . -x '*.DS_Store' -x '__MACOSX/*'
 ```
 
 Verify the manifest is at the zip root:
 
 ```bash
-unzip -l ../verihire-ai.zip | grep manifest.json   # should show "manifest.json", not "verihire-ai/manifest.json"
+unzip -l ../internshield-ai.zip | grep manifest.json   # should show "manifest.json", not "internshield-ai/manifest.json"
 ```
 
 ### 3.3 Submit
 
 1. Go to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) (one-time $5 registration fee).
-2. **Add new item** → upload `verihire-ai.zip`.
+2. **Add new item** → upload `internshield-ai.zip`.
 3. Fill the store listing: description, category (**Productivity**), language, screenshots, small/large promo tiles.
 4. **Privacy practices** tab — declare data use honestly:
    - Single purpose: *"Analyze the current job/internship posting for scam signals and show a trust score."*
