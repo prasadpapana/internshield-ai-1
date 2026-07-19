@@ -96,7 +96,7 @@ async function init() {
       ]);
       const backup = {
         version: 1,
-        generator: 'DraftJobs AI',
+        generator: 'DraftJobs',
         exportedAt: new Date().toISOString(),
         settings: currentSettings,
         history: hist,
