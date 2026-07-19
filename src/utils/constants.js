@@ -4,7 +4,7 @@
 // means tuning the model never requires touching engine logic.
 
 export const APP = Object.freeze({
-  NAME: 'InternShield AI',
+  NAME: 'DraftJobs AI',
   VERSION: '1.0.0',
 });
 

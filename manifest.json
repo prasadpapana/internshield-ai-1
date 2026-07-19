@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "InternShield AI",
+  "name": "DraftJobs AI",
   "version": "1.0.0",
   "description": "Scan internship and job postings for scam signals before you apply. Get a trust score, risk level, and a clear recommendation.",
   "minimum_chrome_version": "111",
@@ -12,7 +12,7 @@
   },
   "action": {
     "default_popup": "src/popup/popup.html",
-    "default_title": "InternShield AI",
+    "default_title": "DraftJobs AI",
     "default_icon": {
       "16": "assets/icons/icon-16.png",
       "32": "assets/icons/icon-32.png",

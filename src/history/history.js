@@ -560,7 +560,7 @@ function exportToCSV() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `internshield_scans_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute('download', `draftjobs_scans_${new Date().toISOString().slice(0, 10)}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();

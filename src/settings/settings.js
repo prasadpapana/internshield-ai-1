@@ -96,7 +96,7 @@ async function init() {
       ]);
       const backup = {
         version: 1,
-        generator: 'InternShield AI',
+        generator: 'DraftJobs AI',
         exportedAt: new Date().toISOString(),
         settings: currentSettings,
         history: hist,
@@ -106,7 +106,7 @@ async function init() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `internshield_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `draftjobs_backup_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
