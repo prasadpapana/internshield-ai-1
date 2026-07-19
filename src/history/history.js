@@ -1,5 +1,5 @@
 // src/history/history.js
-import { getSettings } from '../services/storage.js';
+import { getSettings, saveSettings } from '../services/storage.js';
 import { formatDate } from '../utils/helpers.js';
 
 const RISK = {
@@ -211,45 +211,109 @@ function renderReportsList() {
   }
 }
 
+function getInitials(name) {
+  if (!name) return '??';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+const COLORS = ['#62aef0', '#d6b6f6', '#ff64c8', '#dd5b00', '#2a9d99', '#1aae39'];
+function getColorForString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % COLORS.length;
+  return COLORS[idx];
+}
+
 function kcard(scan) {
   const risk = RISK[scan.riskLevel] || RISK.medium;
   const cardEl = document.createElement('div');
   cardEl.className = 'kcard';
 
+  // Header row: Avatar, Info, Menu
+  const header = document.createElement('div');
+  header.className = 'kcard__head';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'kcard__avatar';
+  avatar.style.backgroundColor = getColorForString(scan.company);
+  avatar.textContent = getInitials(scan.company);
+
+  const headText = document.createElement('div');
+  headText.className = 'kcard__head-text';
+
   const company = document.createElement('div');
   company.className = 'kcard__company';
   company.textContent = scan.company;
+
+  const date = document.createElement('div');
+  date.className = 'kcard__date';
+  date.textContent = formatDate(scan.date);
+
+  headText.append(company, date);
+
+  const menuBtn = document.createElement('button');
+  menuBtn.className = 'kcard__menu';
+  menuBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="19" r="1.2"/></svg>';
+  menuBtn.title = 'Delete scan';
+  menuBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (confirm(`Delete scan for ${scan.jobTitle} at ${scan.company}?`)) {
+      const resp = await send({ type: 'DELETE_SCAN', id: scan.id });
+      all = Array.isArray(resp.history) ? resp.history : all.filter((s) => s.id !== scan.id);
+      updateStats();
+      render();
+    }
+  });
+
+  header.append(avatar, headText, menuBtn);
+
+  // Body: Job Title, Email row, Website row
+  const body = document.createElement('div');
+  body.className = 'kcard__body-content';
 
   const title = document.createElement('div');
   title.className = 'kcard__title';
   title.textContent = scan.jobTitle;
 
-  const meta = document.createElement('div');
-  meta.className = 'kcard__meta';
+  const emailRow = document.createElement('div');
+  emailRow.className = 'kcard__row';
+  emailRow.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
+  const emailText = document.createElement('span');
+  emailText.textContent = (scan.emails && scan.emails[0]) || 'recruiter@' + (scan.domainData && scan.domainData.domain || 'domain.com');
+  emailRow.appendChild(emailText);
 
-  const score = document.createElement('span');
-  score.className = 'kcard__score';
-  score.style.background = risk.color;
-  score.textContent = scan.trustScore;
+  const urlRow = document.createElement('div');
+  urlRow.className = 'kcard__row';
+  urlRow.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+  const urlLink = document.createElement('span');
+  urlLink.textContent = scan.url ? new URL(scan.url).hostname : 'company.com';
+  urlRow.appendChild(urlLink);
 
-  const date = document.createElement('span');
-  date.className = 'kcard__date';
-  date.textContent = formatDate(scan.date);
+  body.append(title, emailRow, urlRow);
 
-  meta.append(score, date);
+  // Footer: Status Tag, Trust Score
+  const footer = document.createElement('div');
+  footer.className = 'kcard__foot';
 
-  cardEl.append(company, title, meta);
+  const tag = document.createElement('span');
+  tag.className = 'kcard__tag';
+  tag.dataset.level = scan.riskLevel;
+  tag.textContent = risk.label;
 
-  if (scan.url) {
-    const url = document.createElement('a');
-    url.className = 'kcard__url';
-    url.href = scan.url;
-    url.target = '_blank';
-    url.rel = 'noopener noreferrer';
-    url.textContent = scan.url;
-    url.addEventListener('click', (e) => e.stopPropagation());
-    cardEl.appendChild(url);
-  }
+  const scoreBadge = document.createElement('span');
+  scoreBadge.className = 'kcard__score-badge';
+  scoreBadge.dataset.level = scan.riskLevel;
+  scoreBadge.textContent = `${scan.trustScore}% Trust`;
+
+  footer.append(tag, scoreBadge);
+
+  cardEl.append(header, body, footer);
 
   cardEl.addEventListener('click', () => {
     // Switch to Scans List view and scroll/open the specific card
@@ -503,8 +567,22 @@ function exportToCSV() {
   document.body.removeChild(link);
 }
 
+async function initPrivacyToggle() {
+  const toggle = $('sidebarPrivacyToggle');
+  if (!toggle) return;
+  const s = await getSettings();
+  toggle.checked = !!s.privacyMode;
+  toggle.addEventListener('change', async (e) => {
+    const current = await getSettings();
+    current.privacyMode = e.target.checked;
+    await saveSettings(current);
+    chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings: current });
+  });
+}
+
 function init() {
   applyTheme();
+  initPrivacyToggle();
   
   // Search input listeners
   $('search').addEventListener('input', (e) => {

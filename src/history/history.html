@@ -36,8 +36,14 @@
             <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
             <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
           </svg>
-          <span>Dashboard</span>
+          <span>Leads</span>
         </a>
+        <div class="sidebar__sub" id="sidebarPrivacySub">
+          <label class="sidebar__sub-label">
+            <input type="checkbox" id="sidebarPrivacyToggle" />
+            <span>Privacy Settings</span>
+          </label>
+        </div>
         <a class="nav-item" id="navScans" href="#" data-view="scans">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2.5 4 5.5v6c0 4.4 3.2 8.4 8 9.9 4.8-1.5 8-5.5 8-9.9v-6L12 2.5Z" />
@@ -96,7 +102,7 @@
       <section class="view view--active" id="viewDashboard" data-view="dashboard">
         <div class="view__header">
           <div>
-            <h1 class="view__title">Dashboard</h1>
+            <h1 class="view__title">Leads</h1>
             <p class="view__sub" id="countSub">—</p>
           </div>
           <div class="view__actions">
