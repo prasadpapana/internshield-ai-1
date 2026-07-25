@@ -41,24 +41,91 @@ async function applyTheme() {
 // ---- state ----------------------------------------------------------------
 function setState(state) { app.setAttribute('data-state', state); }
 
-const LOADING_STEPS = [
-  'Reading the page\u2026',
-  'Checking the company\u2026',
-  'Inspecting the domain\u2026',
-  'Scoring the posting\u2026',
-];
-let loadingTimer = null;
+let loadingProgress = 0;
+let loadingTarget = 90;
+let loadingInterval = null;
+let scanResultData = null;
+
 function startLoading() {
   setState('loading');
-  let i = 0;
-  $('loadingStatus').textContent = LOADING_STEPS[0];
-  loadingTimer = setInterval(() => {
-    i = (i + 1) % LOADING_STEPS.length;
-    $('loadingStatus').textContent = LOADING_STEPS[i];
-  }, 650);
+  loadingProgress = 0;
+  loadingTarget = 90;
+  scanResultData = null;
+
+  // Reset loading step checklist elements
+  const stepIds = ['url', 'domain', 'company', 'ssl', 'db', 'ai'];
+  stepIds.forEach(id => {
+    const el = $(`load-proc-${id}`);
+    if (el) {
+      el.className = 'proc-item proc-item--pending';
+      const statusEl = el.querySelector('.proc-item__status');
+      if (statusEl) statusEl.textContent = '○';
+    }
+  });
+  $('loadProgressBarFill').style.width = '0%';
+  $('loadProgressVal').textContent = '0%';
+
+  loadingInterval = setInterval(() => {
+    // If scan has already returned, we can speed up the progress bar to 100%
+    const currentTarget = scanResultData ? 100 : loadingTarget;
+    if (loadingProgress < currentTarget) {
+      const diff = currentTarget - loadingProgress;
+      const step = scanResultData ? Math.max(4, diff * 0.2) : Math.max(1, diff * 0.1);
+      loadingProgress = Math.min(currentTarget, loadingProgress + step);
+    }
+
+    // Update progress bar
+    $('loadProgressBarFill').style.width = `${Math.round(loadingProgress)}%`;
+    $('loadProgressVal').textContent = `${Math.round(loadingProgress)}%`;
+
+    // Update loading steps checklist states
+    updateLoadingSteps(loadingProgress);
+
+    // If 100% progress and data is available, render it
+    if (loadingProgress >= 100) {
+      stopLoading();
+      if (scanResultData) {
+        renderResult(scanResultData);
+      } else {
+        showError('No scan data received.');
+      }
+    }
+  }, 50);
 }
+
+function updateLoadingSteps(progress) {
+  const steps = [
+    { id: 'url', min: 0, max: 15 },
+    { id: 'domain', min: 15, max: 35 },
+    { id: 'company', min: 35, max: 55 },
+    { id: 'ssl', min: 55, max: 70 },
+    { id: 'db', min: 70, max: 85 },
+    { id: 'ai', min: 85, max: 100 }
+  ];
+
+  steps.forEach(step => {
+    const el = $(`load-proc-${step.id}`);
+    if (!el) return;
+    const statusEl = el.querySelector('.proc-item__status');
+
+    if (progress >= step.max) {
+      el.className = 'proc-item proc-item--done';
+      if (statusEl) statusEl.textContent = '✓';
+    } else if (progress >= step.min) {
+      el.className = 'proc-item proc-item--active';
+      if (statusEl) statusEl.textContent = '●';
+    } else {
+      el.className = 'proc-item proc-item--pending';
+      if (statusEl) statusEl.textContent = '○';
+    }
+  });
+}
+
 function stopLoading() {
-  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
+  if (loadingInterval) {
+    clearInterval(loadingInterval);
+    loadingInterval = null;
+  }
 }
 
 function showError(msg) {
@@ -71,23 +138,53 @@ function showError(msg) {
 async function scan() {
   startLoading();
   const resp = await send({ type: 'SCAN_PAGE' });
-  stopLoading();
-  if (resp.error) { showError(resp.error); return; }
-  if (!resp.scan) { showError('No result returned. Try again.'); return; }
+  if (resp.error) {
+    stopLoading();
+    showError(resp.error);
+    return;
+  }
+  if (!resp.scan) {
+    stopLoading();
+    showError('No result returned. Try again.');
+    return;
+  }
   currentScan = resp.scan;
-  renderResult(resp.scan);
+  scanResultData = resp.scan;
 }
 
 // ---- render ---------------------------------------------------------------
+function updateFactor(el, pass, text) {
+  if (!el) return;
+  el.className = `factor-item factor-item--${pass ? 'pass' : 'fail'}`;
+  const iconEl = el.querySelector('.factor-icon');
+  const lblEl = el.querySelector('.factor-lbl');
+  if (iconEl) iconEl.textContent = pass ? '✓' : '✗';
+  if (lblEl) lblEl.textContent = text;
+}
+
 function renderResult(scan) {
   const color = RISK_COLOR[scan.riskLevel] || getVar('--brand');
   app.style.setProperty('--verdict', color);
 
-  // verdict gauge
-  $('riskPill').textContent = scan.riskLabel;
-  $('summary').textContent = scan.summary;
-  $('scamVal').textContent = `${scan.scamProbability}%`;
-  $('confVal').textContent = `${scan.confidence}%`;
+  // populate score and badge
+  $('riskBadge').textContent = scan.riskLabel;
+  
+  // Custom simple recommendation text:
+  let recLabel = 'Safe';
+  if (scan.riskLevel === 'low') recLabel = 'Safe';
+  else if (scan.riskLevel === 'medium') recLabel = 'Be Cautious';
+  else if (scan.riskLevel === 'high') recLabel = 'High Risk';
+  else if (scan.riskLevel === 'critical') recLabel = 'Likely Scam';
+  $('recoText').textContent = `Recommendation: ${recLabel}`;
+
+  // Update Risk Factors
+  const hasWebsite = !!(scan.companyData && (scan.companyData.website || scan.companyData.linkedin));
+  const isValidCompany = !!(scan.companyData && (scan.companyData.verificationStatus === 'verified' || scan.companyData.verificationStatus === 'partially_verified'));
+  const noPhishing = scan.scamProbability < 30;
+
+  updateFactor($('factor-website'), hasWebsite, 'Official website');
+  updateFactor($('factor-company'), isValidCompany, 'Valid company');
+  updateFactor($('factor-phishing'), noPhishing, 'No phishing detected');
 
   // job reference (textContent => XSS-safe)
   $('jobTitle').textContent = scan.jobTitle;
@@ -121,12 +218,8 @@ function renderResult(scan) {
 
   setState('result');
 
-  // animate gauge: dashoffset 327 -> based on score, count up number
-  const fillEl = $('gaugeFill');
-  const circumference = 327; // 2*pi*52 rounded
-  const offset = circumference - (circumference * scan.trustScore) / 100;
-  requestAnimationFrame(() => { fillEl.style.strokeDashoffset = String(offset); });
-  countUp($('scoreVal'), scan.trustScore);
+  // animate score number count up
+  countUp($('scoreNum'), scan.trustScore);
 }
 
 function renderList(ul, items, emptyMsg) {
