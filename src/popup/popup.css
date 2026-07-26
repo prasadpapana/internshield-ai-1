@@ -58,7 +58,7 @@ html[data-theme="dark"] {
 }
 
 body {
-  width: 650px;
+  width: 960px;
   font-family: var(--font);
   color: var(--ink-soft);
   background: var(--bg);
@@ -912,4 +912,318 @@ body {
 
 .factor-item--fail .factor-icon {
   color: var(--critical);
+}
+
+/* ========================================================================
+   LinkedIn-Style 3-Column Layout
+   ======================================================================== */
+
+.linkedin-layout {
+  display: grid;
+  grid-template-columns: 210px 1fr 210px;
+  gap: 12px;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ---- Side Panels -------------------------------------------------------- */
+.side-panel {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none; /* Firefox */
+  padding: 12px 0;
+  /* Smooth fade-in when result arrives */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.side-panel::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Hidden by default — shown only when result is visible */
+.side-panel {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+}
+
+.side-panel.sp-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* ---- Side Panel Card ---------------------------------------------------- */
+.sp-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- SP Header ---------------------------------------------------------- */
+.sp-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 2px;
+}
+
+.sp-header svg {
+  flex-shrink: 0;
+  color: var(--brand);
+}
+
+/* ---- SP Section --------------------------------------------------------- */
+.sp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+/* ---- Fit Ring (Resume panel) -------------------------------------------- */
+.sp-fit-ring,
+.sp-ats-gauge {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+  margin: 4px auto;
+}
+
+.sp-ring-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 6;
+}
+
+.sp-ring-fill {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 32px 32px;
+  /* circumference of r=26: ~163.4 */
+  stroke-dasharray: 163.4;
+  stroke-dashoffset: 163.4; /* starts at 0% */
+  transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.4s ease;
+}
+
+.sp-ring-fill--ats {
+  stroke: var(--verdict);
+}
+
+.sp-ring-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1;
+}
+
+.sp-ring-num {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+
+.sp-ring-lbl {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* ---- ATS label ---------------------------------------------------------- */
+.sp-ats-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* ---- Skill bars (Resume panel) ------------------------------------------ */
+.sp-skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sp-skill-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 3px;
+  align-items: center;
+}
+
+.sp-skill-name {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-skill-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  padding-left: 4px;
+}
+
+.sp-skill-bar-track {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.sp-skill-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand) 0%, #7C3AED 100%);
+  width: 0;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sp-skill-placeholder .sp-skill-bar-fill {
+  background: var(--border);
+}
+
+/* ---- Tips (Resume panel) ------------------------------------------------ */
+.sp-tip-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sp-tip {
+  position: relative;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  padding-left: 14px;
+}
+
+.sp-tip::before {
+  content: '●';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-size: 7px;
+  color: var(--brand);
+}
+
+.sp-tip--good::before { color: var(--safe); }
+.sp-tip--warn::before { color: var(--high); }
+.sp-tip--idle { color: var(--muted); font-style: italic; }
+.sp-tip--idle::before { display: none; }
+
+/* ---- ATS Breakdown bars (Right panel) ----------------------------------- */
+.sp-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sp-bd-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 3px;
+  align-items: center;
+}
+
+.sp-bd-lbl {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.sp-bd-val {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+  padding-left: 4px;
+}
+
+.sp-bd-track {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.sp-bd-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--verdict);
+  width: 0;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sp-bd-placeholder .sp-bd-fill {
+  background: var(--border);
+}
+
+/* ---- Verdict chip (Right panel) ----------------------------------------- */
+.sp-verdict-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  background: color-mix(in srgb, var(--verdict, var(--brand)) 8%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--verdict, var(--brand)) 18%, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.sp-verdict-icon {
+  font-size: 13px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.sp-verdict-text {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  font-weight: 500;
 }

@@ -39,7 +39,19 @@ async function applyTheme() {
 }
 
 // ---- state ----------------------------------------------------------------
-function setState(state) { app.setAttribute('data-state', state); }
+function setState(state) {
+  app.setAttribute('data-state', state);
+  // Show side panels only when result is visible
+  const panelLeft = document.getElementById('sidePanelLeft');
+  const panelRight = document.getElementById('sidePanelRight');
+  if (state === 'result') {
+    panelLeft && panelLeft.classList.add('sp-visible');
+    panelRight && panelRight.classList.add('sp-visible');
+  } else {
+    panelLeft && panelLeft.classList.remove('sp-visible');
+    panelRight && panelRight.classList.remove('sp-visible');
+  }
+}
 
 let loadingProgress = 0;
 let loadingTarget = 90;
@@ -220,6 +232,9 @@ function renderResult(scan) {
 
   // animate score number count up
   countUp($('scoreNum'), scan.trustScore);
+
+  // populate LinkedIn side panels
+  renderSidePanels(scan);
 }
 
 function renderList(ul, items, emptyMsg) {
@@ -249,6 +264,172 @@ function countUp(el, target) {
     if (t < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
+}
+
+// ---- Side Panel rendering -------------------------------------------------
+function renderSidePanels(scan) {
+  renderResumePanel(scan);
+  renderAtsPanel(scan);
+}
+
+function renderResumePanel(scan) {
+  // Derive a "resume fit" score from trustScore + positives/negatives balance
+  const posCount = (scan.positives || []).length;
+  const negCount = (scan.negatives || []).length;
+  const total = posCount + negCount || 1;
+  const rawFit = Math.round((scan.trustScore * 0.6) + ((posCount / total) * 40));
+  const fitScore = Math.min(100, Math.max(0, rawFit));
+
+  // Fit ring
+  const ringFill = document.getElementById('resumeRingFill');
+  const fitScoreEl = document.getElementById('resumeFitScore');
+  if (ringFill) {
+    const circ = 163.4;
+    const offset = circ - (circ * fitScore / 100);
+    requestAnimationFrame(() => { ringFill.style.strokeDashoffset = String(offset); });
+  }
+  if (fitScoreEl) countUp(fitScoreEl, fitScore);
+
+  // Skill alignment bars (derived from breakdown)
+  const skillList = document.getElementById('resumeSkillList');
+  if (skillList && scan.breakdown) {
+    skillList.replaceChildren();
+    const skillMap = {
+      company: 'Company Fit',
+      domain:  'Platform Trust',
+      content: 'Job Clarity',
+      recruiter: 'Recruiter Quality',
+    };
+    for (const [key, label] of Object.entries(skillMap)) {
+      const pct = scan.breakdown[key] ?? 0;
+      const item = document.createElement('div');
+      item.className = 'sp-skill-item';
+
+      const name = document.createElement('span');
+      name.className = 'sp-skill-name';
+      name.textContent = label;
+
+      const pctEl = document.createElement('span');
+      pctEl.className = 'sp-skill-pct';
+      pctEl.textContent = `${pct}%`;
+
+      const track = document.createElement('div');
+      track.className = 'sp-skill-bar-track';
+      const fill = document.createElement('div');
+      fill.className = 'sp-skill-bar-fill';
+      fill.style.width = '0%';
+      track.appendChild(fill);
+
+      item.append(name, pctEl, track);
+      skillList.appendChild(item);
+      requestAnimationFrame(() => { fill.style.width = `${pct}%`; });
+    }
+  }
+
+  // Resume tips from positives/negatives
+  const tipList = document.getElementById('resumeTipList');
+  if (tipList) {
+    tipList.replaceChildren();
+    const tips = [];
+    // Good signals → resume alignment tips
+    for (const p of (scan.positives || []).slice(0, 3)) {
+      tips.push({ text: p, type: 'good' });
+    }
+    // Warning signals → resume watch-outs
+    for (const n of (scan.negatives || []).slice(0, 3)) {
+      tips.push({ text: n, type: 'warn' });
+    }
+    if (tips.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'sp-tip sp-tip--idle';
+      li.textContent = 'No specific tips available.';
+      tipList.appendChild(li);
+    } else {
+      for (const tip of tips) {
+        const li = document.createElement('li');
+        li.className = `sp-tip sp-tip--${tip.type}`;
+        li.textContent = tip.text;
+        tipList.appendChild(li);
+      }
+    }
+  }
+}
+
+function renderAtsPanel(scan) {
+  // ATS match = trustScore (how well the posting passes legitimacy checks)
+  const atsPct = Math.min(100, Math.max(0, scan.trustScore || 0));
+
+  // ATS ring
+  const atsRing = document.getElementById('atsRingFill');
+  const atsPctEl = document.getElementById('atsMatchPct');
+  if (atsRing) {
+    const circ = 163.4;
+    const offset = circ - (circ * atsPct / 100);
+    requestAnimationFrame(() => { atsRing.style.strokeDashoffset = String(offset); });
+  }
+  if (atsPctEl) countUp(atsPctEl, atsPct);
+
+  // ATS label
+  const atsLabel = document.getElementById('atsMatchLabel');
+  if (atsLabel) {
+    const lvl = scan.riskLevel || 'safe';
+    const msgs = {
+      safe:     'Strong ATS match. Posting looks legitimate.',
+      low:      'Good match. Minor signals to review.',
+      medium:   'Moderate match. Proceed with caution.',
+      high:     'Weak match. Several red flags present.',
+      critical: 'Very low match. Likely fraudulent posting.',
+    };
+    atsLabel.textContent = msgs[lvl] || msgs.safe;
+  }
+
+  // Score breakdown bars
+  const bdList = document.getElementById('atsBreakdownList');
+  if (bdList && scan.breakdown) {
+    bdList.replaceChildren();
+    const bdLabels = { company: 'Company', domain: 'Domain', content: 'Content', recruiter: 'Recruiter' };
+    for (const [key, label] of Object.entries(bdLabels)) {
+      const pct = scan.breakdown[key] ?? 0;
+      const item = document.createElement('div');
+      item.className = 'sp-bd-item';
+
+      const lbl = document.createElement('span');
+      lbl.className = 'sp-bd-lbl';
+      lbl.textContent = label;
+
+      const val = document.createElement('span');
+      val.className = 'sp-bd-val';
+      val.textContent = `${pct}%`;
+
+      const track = document.createElement('div');
+      track.className = 'sp-bd-track';
+      const fill = document.createElement('div');
+      fill.className = 'sp-bd-fill';
+      fill.style.width = '0%';
+      track.appendChild(fill);
+
+      item.append(lbl, val, track);
+      bdList.appendChild(item);
+      requestAnimationFrame(() => { fill.style.width = `${pct}%`; });
+    }
+  }
+
+  // Verdict chip
+  const icon = document.getElementById('atsVerdictIcon');
+  const text = document.getElementById('atsVerdictText');
+  if (icon && text) {
+    const lvl = scan.riskLevel || 'safe';
+    const verdicts = {
+      safe:     { icon: '✓', msg: 'Safe to apply. Posting passes all checks.' },
+      low:      { icon: '✓', msg: 'Generally safe. Double-check company details.' },
+      medium:   { icon: '⚠', msg: 'Be cautious. Review flagged items before applying.' },
+      high:     { icon: '✗', msg: 'High risk. Avoid sharing personal details.' },
+      critical: { icon: '✗', msg: 'Likely scam. Do not apply or share information.' },
+    };
+    const v = verdicts[lvl] || verdicts.safe;
+    icon.textContent = v.icon;
+    text.textContent = v.msg;
+  }
 }
 
 // ---- report modal ---------------------------------------------------------
