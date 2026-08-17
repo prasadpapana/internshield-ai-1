@@ -15,35 +15,40 @@ export async function analyzeJobWithGrokAI(pageData, deterministicSignals) {
 
   const model = process.env.GROK_MODEL || 'grok-3-mini';
 
-  const systemPrompt = `You are an expert cybersecurity and job scam detection specialist for DraftJobs.
-Analyze the provided job/internship posting data for potential scam signals.
+  const systemPrompt = `You are an expert job scam detection AI for DraftJobs.
+Analyze the provided job/internship posting for potential scam signals.
 
-Target Signals to Watch:
-- Asking for money, application fees, training fees, security deposits, device charges
-- Requests for sensitive details (Bank details, OTP, passwords, SSN/Aadhaar)
-- Communication funneled solely to Telegram/WhatsApp/personal Gmail
-- Unrealistic salary claims, "easy work-from-home", "guaranteed job/placement"
-- Urgent pressure tactics, missing company info, poorly written descriptions
+Target Signals to Evaluate:
+- Payment requests (registration fees, training fees, security deposits)
+- OTP, password, bank account, Aadhaar/SSN requests
+- Telegram/WhatsApp-only contact
+- Unrealistic salary claims, fast cash, guaranteed job placement
+- Urgent pressure tactics, missing company info, suspicious APK/software download
 
 You MUST respond ONLY with valid JSON in this EXACT structure (no markdown formatting, no code block backticks):
 {
-  "trustScore": 75,
+  "trustScore": 100,
   "riskLevel": "LOW",
-  "signals": ["Signal description 1", "Signal description 2"],
-  "reasoning": "Clear explanation of why this risk level was assigned.",
-  "recommendation": "Actionable recommendation for the user.",
+  "signals": [
+    {
+      "type": "SUSPICIOUS_CONTACT",
+      "severity": "MEDIUM",
+      "description": "The recruiter asks applicants to continue communication through Telegram."
+    }
+  ],
+  "reasoning": "Clear explanation of why this score was assigned.",
+  "recommendation": "Actionable recommendation for the candidate.",
   "confidence": 85
 }
 
-Risk level values MUST be one of: "LOW", "MODERATE", "HIGH", "VERY HIGH".
-Trust score MUST be an integer between 0 and 100 (100 = completely trustworthy, 0 = definite scam).
-Confidence MUST be an integer between 0 and 100.`;
+Risk level values MUST be one of: "LOW", "MODERATE", "HIGH", "VERY_HIGH".
+Trust score MUST be a dynamically calculated integer between 0 and 100 based strictly on evidence (100 = completely trustworthy, 0 = definite scam).`;
 
   const userPrompt = `Job Title: ${pageData.jobTitle || 'Unknown'}
 Company: ${pageData.company || 'Unknown'}
 URL: ${pageData.url || 'Unknown'}
 Extracted Contact Emails: ${JSON.stringify(pageData.emails || [])}
-Deterministic Signals Already Detected: ${JSON.stringify(deterministicSignals.map((s) => s.label))}
+Deterministic Signals Detected: ${JSON.stringify(deterministicSignals.map((s) => ({ type: s.type, description: s.description })))}
 
 Job Description Text:
 """
@@ -66,7 +71,7 @@ ${(pageData.text || '').slice(0, 4000)}
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.2,
+        temperature: 0.1,
         response_format: { type: 'json_object' },
       }),
       signal: controller.signal,
@@ -85,7 +90,7 @@ ${(pageData.text || '').slice(0, 4000)}
       return createFallbackResult(`Grok API responded with status ${res.status}`);
     }
 
-    const json = await res.parseJson ? await res.parseJson() : await res.json();
+    const json = await res.json();
     const rawContent = json?.choices?.[0]?.message?.content;
 
     if (!rawContent) {

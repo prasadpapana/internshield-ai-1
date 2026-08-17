@@ -174,7 +174,14 @@ function updateFactor(el, pass, text) {
 }
 
 function renderResult(scan) {
-  const color = RISK_COLOR[scan.riskLevel] || getVar('--brand');
+  const levelKey = String(scan.riskLevel || '').toLowerCase().replace(/[^a-z]/g, '');
+  let colorKey = 'medium';
+  if (levelKey === 'low' || levelKey === 'safe') colorKey = 'safe';
+  else if (levelKey === 'moderate') colorKey = 'medium';
+  else if (levelKey === 'high') colorKey = 'high';
+  else if (levelKey === 'veryhigh' || levelKey === 'critical') colorKey = 'critical';
+
+  const color = RISK_COLOR[colorKey] || getVar('--brand');
   app.style.setProperty('--verdict', color);
 
   // AI badge

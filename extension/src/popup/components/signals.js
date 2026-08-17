@@ -17,9 +17,22 @@ function renderList(ul, items, emptyMsg) {
     return;
   }
 
-  for (const item of items.slice(0, 8)) {
+  for (const item of items.slice(0, 10)) {
     const li = document.createElement('li');
-    li.textContent = item;
+    if (typeof item === 'string') {
+      li.textContent = item;
+    } else if (item && typeof item === 'object') {
+      const desc = item.description || item.label || item.type || 'Flagged signal';
+      if (item.severity) {
+        const span = document.createElement('span');
+        span.className = `signal-tag signal-tag--${String(item.severity).toLowerCase()}`;
+        span.textContent = `[${item.severity}] `;
+        li.appendChild(span);
+        li.appendChild(document.createTextNode(desc));
+      } else {
+        li.textContent = desc;
+      }
+    }
     ul.appendChild(li);
   }
 }

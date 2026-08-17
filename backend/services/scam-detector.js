@@ -1,104 +1,146 @@
 // backend/services/scam-detector.js
-// Server-side deterministic scam signal detector.
+// Server-side deterministic scam signal detector with accurate, non-duplicating signal deductions.
 
-const SCAM_RULES = [
+export const DETECTABLE_SCAM_RULES = [
   {
-    id: 'FEE_REQUEST',
-    label: 'Asking for registration, training, onboarding, or security fee',
-    weight: 25,
-    re: /\b(registration|processing|training|application|onboarding|security|refundable)\s+fee\b/i,
+    type: 'OTP_PASSWORD_REQUEST',
+    severity: 'CRITICAL',
+    deduction: 40,
+    description: 'Requests candidate for OTP, password, or account login credentials.',
+    re: /\b(otp|one\s*time\s*password|login\s*password|account\s*password|verification\s*code)\b/i,
   },
   {
-    id: 'MONEY_REQUEST',
-    label: 'Requests candidate to pay, deposit, or wire money',
-    weight: 20,
-    re: /\b(pay|send|deposit|transfer|wire)\b[^.]{0,40}\b(fee|money|amount|deposit|\$|usd|inr|rs)\b/i,
+    type: 'BANK_DETAILS_REQUEST',
+    severity: 'CRITICAL',
+    deduction: 35,
+    description: 'Requests bank account number, routing number, IFSC, or card details.',
+    re: /\b(bank\s+account|routing\s+number|ifsc|credit\s+card|debit\s+card|cvv|bank\s+details)\b/i,
   },
   {
-    id: 'SENSITIVE_INFO',
-    label: 'Requests sensitive bank, OTP, password, Aadhaar, or card details',
-    weight: 25,
-    re: /\b(bank\s+account|routing\s+number|ifsc|otp|password|credit\s+card|debit\s+card|ssn|social\s+security|aadhaar|passport\s+number)\b/i,
+    type: 'PAYMENT_FEE_REQUEST',
+    severity: 'HIGH',
+    deduction: 30,
+    description: 'Asks applicant to pay a registration fee, processing charge, training cost, or security deposit.',
+    re: /\b(registration|processing|training|application|onboarding|security|refundable)\s+(fee|cost|charge|amount|deposit)\b|\b(pay|send|deposit|transfer|wire)\b[^.]{0,35}\b(fee|money|amount|\$|usd|inr|rs)\b/i,
   },
   {
-    id: 'CRYPTO_PAYMENT',
-    label: 'Requests payment via crypto, gift cards, or Western Union',
-    weight: 25,
+    type: 'IDENTITY_DOC_REQUEST',
+    severity: 'HIGH',
+    deduction: 25,
+    description: 'Requests sensitive personal identity documents (Aadhaar, SSN, Passport) prior to hiring.',
+    re: /\b(ssn|social\s+security\s+number|aadhaar|passport\s+number|national\s+id)\b/i,
+  },
+  {
+    type: 'SUSPICIOUS_SOFTWARE',
+    severity: 'HIGH',
+    deduction: 25,
+    description: 'Instructs applicant to download or install external files, unknown software, or APKs.',
+    re: /\b(download|install|run)\b[^.]{0,35}\b(software|app|apk|file|installer|exe|anydesk|teamviewer)\b/i,
+  },
+  {
+    type: 'CRYPTO_PAYMENT',
+    severity: 'HIGH',
+    deduction: 25,
+    description: 'Mentions payments or fees via Cryptocurrency, USDT, gift cards, or Western Union.',
     re: /\b(bitcoin|crypto|usdt|ethereum|gift\s+card|western\s+union|moneygram)\b/i,
   },
   {
-    id: 'MESSAGING_ONLY',
-    label: 'Restricts communication solely to WhatsApp, Telegram, or Signal',
-    weight: 18,
-    re: /\b(whatsapp|telegram|signal)\b[^.]{0,30}\b(only|contact|message|text|chat)\b/i,
+    type: 'SUSPICIOUS_DOMAIN',
+    severity: 'MEDIUM',
+    deduction: 20,
+    description: 'Job posting is served over insecure HTTP or hosted on a high-risk domain extension.',
+    check: (page) => {
+      const url = page.url || '';
+      if (url.startsWith('http://')) return true;
+      const badTlds = ['xyz', 'top', 'club', 'online', 'site', 'website', 'click', 'link', 'work', 'gq', 'cf', 'ml', 'ga', 'tk', 'buzz', 'icu'];
+      try {
+        const host = new URL(url.includes('://') ? url : `https://${url}`).hostname.toLowerCase();
+        const parts = host.split('.');
+        const tld = parts.length > 1 ? parts[parts.length - 1] : '';
+        return badTlds.includes(tld);
+      } catch {
+        return false;
+      }
+    },
   },
   {
-    id: 'NO_INTERVIEW_PROMISE',
-    label: 'Promises guaranteed selection with no skills or interview required',
-    weight: 12,
-    re: /\b(no\s+(experience|interview|skills?)\s+(required|needed|necessary))\b/i,
+    type: 'SUSPICIOUS_EMAIL',
+    severity: 'MEDIUM',
+    deduction: 20,
+    description: 'Recruiter relies on a free email domain (Gmail, Yahoo, Outlook) instead of an official company email.',
+    check: (page) => {
+      const emails = page.emails || [];
+      const freeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'ymail.com', 'aol.com'];
+      return emails.some((e) => freeDomains.some((d) => e.toLowerCase().endsWith(d)));
+    },
   },
   {
-    id: 'URGENCY_PRESSURE',
-    label: 'Employs high-pressure urgent language (ASAP, act now, immediate placement)',
-    weight: 10,
+    type: 'MESSAGING_ONLY',
+    severity: 'MEDIUM',
+    deduction: 15,
+    description: 'Recruiter restricts communication to messaging apps (Telegram, WhatsApp, Signal).',
+    re: /\b(whatsapp|telegram|signal)\b|\b(contact|reach|message|text|chat)\b[^.]{0,40}\b(whatsapp|telegram|signal)\b/i,
+  },
+  {
+    type: 'UNREALISTIC_SALARY',
+    severity: 'MEDIUM',
+    deduction: 15,
+    description: 'Advertises unrealistic fast earnings claims (e.g. $500/day, fast daily cash).',
+    re: /\b(earn|make|get\s+paid)\b[^.]{0,25}\b(\$?\d{3,5})\b[^.]{0,15}\b(per\s+)?(day|daily|hour)\b/i,
+  },
+  {
+    type: 'UNREALISTIC_WFH',
+    severity: 'MEDIUM',
+    deduction: 15,
+    description: 'Promises 100% guaranteed income, no interview needed, or easy work-from-home money.',
+    re: /\b(guaranteed|100%)\s+(income|job|placement|salary|selection)|\b(no\s+(interview|experience|skills?)\s+(required|needed|necessary))\b/i,
+  },
+  {
+    type: 'URGENT_PRESSURE',
+    severity: 'LOW',
+    deduction: 10,
+    description: 'Employs urgent high-pressure tactics (ASAP, act now, limited slots, immediate hiring).',
     re: /\b(urgent|immediate(ly)?|act\s+now|limited\s+(slots|seats|positions)|hurry|asap)\b/i,
   },
   {
-    id: 'UNREALISTIC_EARNINGS',
-    label: 'Claims unrealistic fast daily/weekly high pay',
-    weight: 15,
-    re: /\b(earn|make|get\s+paid)\b[^.]{0,25}\b(\$?\d{3,5})\b[^.]{0,15}\b(per\s+)?(day|week)\b/i,
-  },
-  {
-    id: 'GUARANTEED_INCOME',
-    label: 'Promises 100% guaranteed income or placement',
-    weight: 15,
-    re: /\b(guaranteed|100%)\s+(income|job|placement|salary|selection)\b/i,
+    type: 'MISSING_COMPANY_INFO',
+    severity: 'LOW',
+    deduction: 10,
+    description: 'Hiring company name is missing, hidden, or unverified.',
+    check: (page) => !page.company || page.company.trim().length < 2 || page.company.toLowerCase() === 'unknown company',
   },
 ];
 
 export function detectDeterministicSignals(pageData) {
   const text = pageData.text || '';
-  const detected = [];
-  let scoreDeduction = 0;
+  const detectedSignals = [];
+  const triggeredTypes = new Set();
+  let totalDeductions = 0;
 
-  for (const rule of SCAM_RULES) {
-    if (rule.re.test(text)) {
-      detected.push({
-        id: rule.id,
-        label: rule.label,
-        weight: rule.weight,
+  for (const rule of DETECTABLE_SCAM_RULES) {
+    if (triggeredTypes.has(rule.type)) continue;
+
+    let isTriggered = false;
+    if (rule.re && rule.re.test(text)) {
+      isTriggered = true;
+    } else if (typeof rule.check === 'function' && rule.check(pageData)) {
+      isTriggered = true;
+    }
+
+    if (isTriggered) {
+      triggeredTypes.add(rule.type);
+      detectedSignals.push({
+        type: rule.type,
+        severity: rule.severity,
+        deduction: rule.deduction,
+        description: rule.description,
       });
-      scoreDeduction += rule.weight;
+      totalDeductions += rule.deduction;
     }
   }
 
-  // Recruiter contact checks
-  const emails = pageData.emails || [];
-  const freeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'ymail.com'];
-  const hasFreeEmail = emails.some((e) => freeDomains.some((d) => e.toLowerCase().endsWith(d)));
-  if (hasFreeEmail) {
-    detected.push({
-      id: 'FREE_EMAIL_RECRUITER',
-      label: 'Recruiter relies on personal/free email domain (Gmail/Yahoo/Outlook)',
-      weight: 12,
-    });
-    scoreDeduction += 12;
-  }
-
-  // Missing company name check
-  if (!pageData.company || pageData.company.trim().length < 2) {
-    detected.push({
-      id: 'MISSING_COMPANY_NAME',
-      label: 'Hiring company name is missing or hidden',
-      weight: 15,
-    });
-    scoreDeduction += 15;
-  }
-
   return {
-    signals: detected,
-    scoreDeduction: Math.min(80, scoreDeduction),
+    signals: detectedSignals,
+    totalDeductions,
   };
 }

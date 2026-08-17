@@ -1,161 +1,142 @@
 // extension/src/background/ai.js
-import {
-  WEIGHTS, RISK_BANDS, RECOMMENDATION, SCAM_PATTERNS, TRUST_PATTERNS,
-  FREE_EMAIL_DOMAINS,
-} from './constants.js';
+// Browser-side deterministic scoring engine with dynamic 100-base score deduction model.
+
+import { RECOMMENDATION } from './constants.js';
 import { pct, clamp, uid } from './helpers.js';
-import { analyzeDomain } from './domain.js';
-import { analyzeCompany } from './company.js';
 
-function analyzeContent(page) {
-  const text = page.text || '';
-  const positives = [];
-  const negatives = [];
-  let score = 65;
-  let scamEvidence = 0;
-
-  for (const p of SCAM_PATTERNS) {
-    if (p.re.test(text)) {
-      scamEvidence += p.weight;
-      score -= p.weight * 3;
-      negatives.push(p.label);
-    }
-  }
-  for (const p of TRUST_PATTERNS) {
-    if (p.re.test(text)) {
-      score += p.weight * 2.5;
-      positives.push(p.label);
-    }
-  }
-
-  const letters = text.replace(/[^A-Za-z]/g, '');
-  if (letters.length > 50) {
-    const upper = (text.match(/[A-Z]/g) || []).length;
-    const upperRatio = upper / letters.length;
-    if (upperRatio > 0.35) {
-      score -= 8;
-      scamEvidence += 1;
-      negatives.push('Excessive ALL-CAPS text');
-    }
-  }
-  const emojiCount = (text.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).length;
-  if (emojiCount >= 6) {
-    score -= 6;
-    scamEvidence += 1;
-    negatives.push('Heavy emoji use for a professional listing');
-  }
-  const exclam = (text.match(/!/g) || []).length;
-  if (exclam >= 6) {
-    score -= 5;
-    negatives.push('Overuse of exclamation marks');
-  }
-
-  if (text.length < 280) {
-    score -= 6;
-    negatives.push('Very little posting detail provided');
-  } else if (text.length > 900) {
-    score += 5;
-    positives.push('Detailed, substantive job description');
-  }
-
-  return {
-    score: clamp(score, 0, 100),
-    scamEvidence,
-    positives,
-    negatives,
-  };
-}
-
-function analyzeRecruiter(page) {
-  const text = page.text || '';
-  const positives = [];
-  const negatives = [];
-  let score = 55;
-
-  const emails = page.emails || [];
-  const emailDomains = emails.map((e) => (e.split('@')[1] || '').toLowerCase()).filter(Boolean);
-  const corp = emailDomains.filter((d) => !FREE_EMAIL_DOMAINS.includes(d));
-
-  if (emails.length === 0) {
-    score -= 4;
-  } else if (corp.length > 0) {
-    score += 16;
-    positives.push('Recruiter reachable at a corporate address');
-  } else {
-    score -= 18;
-    negatives.push('Recruiter only reachable via a personal email');
-  }
-
-  if (/\b(whatsapp|telegram|signal)\b/i.test(text)) {
-    score -= 16;
-    negatives.push('Pushes contact onto a messaging app');
-  }
-
-  if (/\b(contact|reach\s+out\s+to|recruiter|hiring\s+manager)\b[^.]{0,30}\b[A-Z][a-z]+\s+[A-Z][a-z]+/.test(text)) {
-    score += 8;
-    positives.push('Names a specific contact person');
-  }
-
-  if ((page.links || []).some((l) => /linkedin\.com\/(in|company)/i.test(l))) {
-    score += 8;
-    positives.push('Recruiter / company has a LinkedIn profile');
-  }
-
-  return {
-    score: clamp(score, 0, 100),
-    positives,
-    negatives,
-  };
-}
-
-function riskFromTrust(trust) {
-  for (const band of RISK_BANDS) {
-    if (trust >= band.min) return band;
-  }
-  return RISK_BANDS[RISK_BANDS.length - 1];
-}
-
-function computeConfidence(page) {
-  let c = 30;
-  if ((page.text || '').length > 400) c += 25;
-  if ((page.text || '').length > 1200) c += 10;
-  if (page.company) c += 12;
-  if (page.jobTitle) c += 8;
-  if ((page.emails || []).length > 0) c += 10;
-  if ((page.links || []).length > 3) c += 5;
-  return pct(c);
-}
+export const SCAM_DEDUCTIONS = [
+  {
+    type: 'OTP_PASSWORD_REQUEST',
+    deduction: 40,
+    label: 'Requests candidate for OTP, password, or account credentials',
+    re: /\b(otp|one\s*time\s*password|login\s*password|account\s*password|verification\s*code)\b/i,
+  },
+  {
+    type: 'BANK_DETAILS_REQUEST',
+    deduction: 35,
+    label: 'Requests bank account, routing number, IFSC, or card details',
+    re: /\b(bank\s+account|routing\s+number|ifsc|credit\s+card|debit\s+card|cvv|bank\s+details)\b/i,
+  },
+  {
+    type: 'PAYMENT_FEE_REQUEST',
+    deduction: 30,
+    label: 'Mentions an upfront fee (registration, processing, training, security deposit)',
+    re: /\b(registration|processing|training|application|onboarding|security|refundable)\s+(fee|cost|charge|amount|deposit)\b|\b(pay|send|deposit|transfer|wire)\b[^.]{0,35}\b(fee|money|amount|\$|usd|inr|rs)\b/i,
+  },
+  {
+    type: 'IDENTITY_DOC_REQUEST',
+    deduction: 25,
+    label: 'Requests sensitive identity details (Aadhaar, SSN, Passport)',
+    re: /\b(ssn|social\s+security\s+number|aadhaar|passport\s+number|national\s+id)\b/i,
+  },
+  {
+    type: 'SUSPICIOUS_SOFTWARE',
+    deduction: 25,
+    label: 'Instructs candidate to download files, unknown software, or APKs',
+    re: /\b(download|install|run)\b[^.]{0,35}\b(software|app|apk|file|installer|exe|anydesk|teamviewer)\b/i,
+  },
+  {
+    type: 'CRYPTO_PAYMENT',
+    deduction: 25,
+    label: 'Mentions crypto, USDT, gift cards, or Western Union',
+    re: /\b(bitcoin|crypto|usdt|ethereum|gift\s+card|western\s+union|moneygram)\b/i,
+  },
+  {
+    type: 'MESSAGING_ONLY',
+    deduction: 15,
+    label: 'Pushes contact onto Telegram, WhatsApp, or Signal',
+    re: /\b(whatsapp|telegram|signal)\b|\b(contact|reach|message|text|chat)\b[^.]{0,40}\b(whatsapp|telegram|signal)\b/i,
+  },
+  {
+    type: 'UNREALISTIC_SALARY',
+    deduction: 15,
+    label: 'Advertises unrealistic fast pay claims',
+    re: /\b(earn|make|get\s+paid)\b[^.]{0,25}\b(\$?\d{3,5})\b[^.]{0,15}\b(per\s+)?(day|daily|hour)\b/i,
+  },
+  {
+    type: 'UNREALISTIC_WFH',
+    deduction: 15,
+    label: 'Promises 100% guaranteed income or selection without interview',
+    re: /\b(guaranteed|100%)\s+(income|job|placement|salary|selection)|\b(no\s+(interview|experience|skills?)\s+(required|needed|necessary))\b/i,
+  },
+  {
+    type: 'URGENT_PRESSURE',
+    deduction: 10,
+    label: 'Uses urgency or pressure language (ASAP, act now)',
+    re: /\b(urgent|immediate(ly)?|act\s+now|limited\s+(slots|seats|positions)|hurry|asap)\b/i,
+  },
+];
 
 export function scoreJob(page, opts = {}) {
-  const domain = analyzeDomain(page);
-  const company = analyzeCompany(page, domain);
-  const content = analyzeContent(page);
-  const recruiter = analyzeRecruiter(page);
+  const text = page.text || '';
+  const positives = [];
+  const negatives = [];
+  let totalDeduction = 0;
+  const triggeredTypes = new Set();
 
-  const trustScore = pct(
-    company.score * WEIGHTS.company
-    + domain.score * WEIGHTS.domain
-    + content.score * WEIGHTS.content
-    + recruiter.score * WEIGHTS.recruiter,
-  );
+  // Evaluate deterministic scam patterns
+  for (const rule of SCAM_DEDUCTIONS) {
+    if (triggeredTypes.has(rule.type)) continue;
+    if (rule.re.test(text)) {
+      triggeredTypes.add(rule.type);
+      totalDeduction += rule.deduction;
+      negatives.push(rule.label);
+    }
+  }
 
-  const evidenceScore = clamp((content.scamEvidence / 12) * 100, 0, 100);
-  const trustGap = 100 - trustScore;
-  const scamProbability = pct(evidenceScore * 0.7 + trustGap * 0.3);
+  // Domain & URL checks
+  if (page.url && page.url.startsWith('http://')) {
+    if (!triggeredTypes.has('SUSPICIOUS_DOMAIN')) {
+      triggeredTypes.add('SUSPICIOUS_DOMAIN');
+      totalDeduction += 20;
+      negatives.push('Posting is served over insecure HTTP');
+    }
+  }
 
-  const band = riskFromTrust(trustScore);
-  const confidence = computeConfidence(page);
+  // Email check
+  const emails = page.emails || [];
+  const freeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'ymail.com'];
+  if (emails.some((e) => freeDomains.some((d) => e.toLowerCase().endsWith(d)))) {
+    if (!triggeredTypes.has('SUSPICIOUS_EMAIL')) {
+      triggeredTypes.add('SUSPICIOUS_EMAIL');
+      totalDeduction += 20;
+      negatives.push('Recruiter contact relies on personal/free email (Gmail/Yahoo)');
+    }
+  }
 
-  const positives = [
-    ...company.positives, ...domain.positives,
-    ...content.positives, ...recruiter.positives,
-  ];
-  const negatives = [
-    ...company.negatives, ...domain.negatives,
-    ...content.negatives, ...recruiter.negatives,
-  ];
+  // Missing company name check
+  if (!page.company || page.company.trim().length < 2 || page.company.toLowerCase() === 'unknown company') {
+    if (!triggeredTypes.has('MISSING_COMPANY_INFO')) {
+      triggeredTypes.add('MISSING_COMPANY_INFO');
+      totalDeduction += 10;
+      negatives.push('Missing or unverified company name');
+    }
+  }
 
-  const summary = buildSummary(band.level, trustScore, scamProbability, negatives.length);
+  // Calculate dynamic trust score starting from 100
+  const trustScore = clamp(100 - totalDeduction, 0, 100);
+
+  // Derive risk level
+  let riskLevel = 'LOW';
+  let riskLabel = 'Low Risk';
+
+  if (trustScore >= 80) {
+    riskLevel = 'LOW';
+    riskLabel = 'Low Risk';
+    positives.push('Posting appears legitimate with no major scam flags.');
+  } else if (trustScore >= 60) {
+    riskLevel = 'MODERATE';
+    riskLabel = 'Moderate Risk';
+    positives.push('Posting looks fine overall but has minor caution items.');
+  } else if (trustScore >= 40) {
+    riskLevel = 'HIGH';
+    riskLabel = 'High Risk';
+  } else {
+    riskLevel = 'VERY_HIGH';
+    riskLabel = 'Very High Risk';
+  }
+
+  const confidence = clamp(60 + (text.length > 500 ? 20 : 0) + (page.company ? 10 : 0), 0, 100);
 
   return {
     id: uid(),
@@ -164,41 +145,21 @@ export function scoreJob(page, opts = {}) {
     company: page.company || 'Unknown company',
     jobTitle: page.jobTitle || page.title || 'Job posting',
     trustScore,
-    scamProbability,
-    riskLevel: band.level,
-    riskLabel: band.label,
+    scamProbability: Math.max(0, 100 - trustScore),
+    riskLevel,
+    riskLabel,
     confidence,
-    summary,
+    summary: `Trust score evaluated at ${trustScore}/100 with ${negatives.length} risk signal(s) detected.`,
     positives,
     negatives,
-    recommendation: RECOMMENDATION[band.level],
+    recommendation: RECOMMENDATION[riskLevel.toLowerCase().replace('_', '')] || RECOMMENDATION.medium,
     breakdown: {
-      company: Math.round(company.score),
-      domain: Math.round(domain.score),
-      content: Math.round(content.score),
-      recruiter: Math.round(recruiter.score),
+      company: page.company ? 90 : 40,
+      domain: page.url.startsWith('https://') ? 95 : 50,
+      content: clamp(100 - totalDeduction, 10, 100),
+      recruiter: emails.length > 0 ? 80 : 50,
     },
-    companyData: company.company,
-    domainData: domain.domainData,
-    rawText: opts.privacyMode ? undefined : (page.text || '').slice(0, 4000),
+    rawText: opts.privacyMode ? undefined : text.slice(0, 4000),
     source: 'local',
   };
-}
-
-function buildSummary(level, trust, scam, flagCount) {
-  const flags = flagCount === 0
-    ? 'no notable red flags'
-    : `${flagCount} flag${flagCount === 1 ? '' : 's'} worth reviewing`;
-  switch (level) {
-    case 'safe':
-      return `Strong trust signals and ${flags}. This reads like a real posting.`;
-    case 'low':
-      return `Mostly solid with ${flags}. A quick independent check is enough.`;
-    case 'medium':
-      return `Mixed signals with ${flags}. Verify before sharing anything personal.`;
-    case 'high':
-      return `Weak trust signals and ${flags}. Several scam patterns are present.`;
-    default:
-      return `Very low trust (${trust}/100) and a ${scam}% scam probability. Avoid this one.`;
-  }
 }
