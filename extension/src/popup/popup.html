@@ -110,7 +110,7 @@
           <p class="idle__note">Supported on LinkedIn, Indeed, Glassdoor, Naukri, & Internshala.</p>
         </section>
 
-        <!-- LOADING -->
+        <!-- LOADING / ANALYZING -->
         <section class="panel panel--loading" data-panel="loading">
           <div class="dashboard-loading">
             <div class="dashboard__col dashboard__col--left">
@@ -138,7 +138,7 @@
                 </div>
                 <div class="proc-item proc-item--pending" id="load-proc-ai">
                   <span class="proc-item__status">○</span>
-                  <span class="proc-item__lbl">Grok AI Verification</span>
+                  <span class="proc-item__lbl" id="load-proc-ai-lbl">Grok AI Verification</span>
                 </div>
               </div>
 
@@ -153,11 +153,11 @@
           </div>
         </section>
 
-        <!-- RESULT -->
+        <!-- RESULT / COMPLETED -->
         <section class="panel panel--result" data-panel="result">
 
           <div class="dashboard">
-            <!-- Left Column: Background Process -->
+            <!-- Left Column: Verification Summary -->
             <div class="dashboard__col dashboard__col--left">
               <h3 class="dashboard__h">Verification Summary</h3>
               <div class="proc-list">
@@ -251,17 +251,21 @@
           </div>
         </section>
 
-        <!-- ERROR -->
+        <!-- ERROR / TIMEOUT / AI_ERROR / BACKEND_ERROR -->
         <section class="panel panel--error" data-panel="error">
           <div class="errbox">
-            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8"
               stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M12 8v5" />
               <path d="M12 16h.01" />
             </svg>
-            <p class="errbox__msg" id="errorMsg">Something went wrong.</p>
-            <button class="btn btn--primary" id="retryBtn">Try again</button>
+            <h2 class="errbox__title" id="errorTitle">Analysis Interrupted</h2>
+            <p class="errbox__msg" id="errorMsg">Something went wrong during analysis.</p>
+            <div class="errbox__actions">
+              <button class="btn btn--primary" id="retryBtn">Retry Analysis</button>
+              <button class="btn btn--ghost" id="useLocalBtn" hidden>Use Local Scan Result</button>
+            </div>
           </div>
         </section>
 

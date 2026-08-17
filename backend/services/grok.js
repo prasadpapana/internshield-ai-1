@@ -3,14 +3,14 @@ import { validateAnalysisResult, createFallbackResult } from '../../shared/schem
 import { logger } from '../utils/logger.js';
 
 const XAI_API_URL = 'https://api.x.ai/v1/chat/completions';
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 12000;
 
 export async function analyzeJobWithGrokAI(pageData, deterministicSignals) {
   const apiKey = process.env.GROK_API_KEY;
 
   if (!apiKey || apiKey === 'your_grok_api_key_here' || apiKey.trim() === '') {
-    logger.warn('Grok AI API key is not configured in backend .env file.');
-    return createFallbackResult('Backend GROK_API_KEY is not configured');
+    logger.warn('[DraftJobs] Grok error: GROK_API_KEY is not configured in backend .env');
+    return createFallbackResult('Backend GROK_API_KEY is missing');
   }
 
   const model = process.env.GROK_MODEL || 'grok-3-mini';
@@ -59,6 +59,7 @@ ${(pageData.text || '').slice(0, 4000)}
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
+    logger.info(`[DraftJobs] Grok request started (model: ${model})`);
     const res = await fetch(XAI_API_URL, {
       method: 'POST',
       headers: {
@@ -79,22 +80,29 @@ ${(pageData.text || '').slice(0, 4000)}
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      logger.error(`Grok API HTTP error (${res.status}): ${errText.slice(0, 200)}`);
+      logger.error(`[DraftJobs] Grok error: HTTP ${res.status} - ${errText.slice(0, 200)}`);
 
       if (res.status === 401 || res.status === 403) {
-        return createFallbackResult('Grok API authentication failed (Invalid API key)');
+        return createFallbackResult('Grok API authentication failed (401/403 Invalid API key)');
+      }
+      if (res.status === 408) {
+        return createFallbackResult('Grok API request timed out (408)');
       }
       if (res.status === 429) {
-        return createFallbackResult('Grok API rate limit reached. Please try again shortly');
+        return createFallbackResult('Grok API rate limit exceeded (429)');
       }
-      return createFallbackResult(`Grok API responded with status ${res.status}`);
+      if (res.status >= 500) {
+        return createFallbackResult(`Grok AI service temporary error (${res.status})`);
+      }
+      return createFallbackResult(`Grok API error HTTP ${res.status}`);
     }
 
     const json = await res.json();
+    logger.info('[DraftJobs] Grok response received');
     const rawContent = json?.choices?.[0]?.message?.content;
 
     if (!rawContent) {
-      logger.warn('Empty message content returned by Grok API');
+      logger.warn('[DraftJobs] Grok error: Empty message content returned');
       return createFallbackResult('Empty response from AI model');
     }
 
@@ -103,7 +111,7 @@ ${(pageData.text || '').slice(0, 4000)}
       const cleanJson = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
       parsedContent = JSON.parse(cleanJson);
     } catch (parseErr) {
-      logger.error('Failed to parse Grok JSON output:', parseErr.message, rawContent.slice(0, 200));
+      logger.error('[DraftJobs] Grok error: JSON parse failure:', parseErr.message);
       return createFallbackResult('Invalid JSON response format from AI model');
     }
 
@@ -111,10 +119,10 @@ ${(pageData.text || '').slice(0, 4000)}
     return validated;
   } catch (err) {
     if (err.name === 'AbortError') {
-      logger.error('Grok API call timed out after 15s');
-      return createFallbackResult('AI model request timed out');
+      logger.error('[DraftJobs] Timeout: Grok API call timed out after 12s');
+      return createFallbackResult('AI service did not respond within 12 seconds');
     }
-    logger.error('Grok API fetch network error:', err.message);
+    logger.error('[DraftJobs] Grok error: Network failure calling xAI API:', err.message);
     return createFallbackResult(`Network failure calling AI service: ${err.message}`);
   } finally {
     clearTimeout(timer);

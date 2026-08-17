@@ -21,6 +21,7 @@ const app = document.getElementById('app');
 const $ = (id) => document.getElementById(id);
 
 let currentScan = null;
+let fallbackLocalScan = null;
 
 function send(message) {
   return new Promise((resolve) => {
@@ -59,6 +60,7 @@ function setState(state) {
 let loadingProgress = 0;
 let loadingTarget = 90;
 let loadingInterval = null;
+let loadingTimeoutTimer = null;
 let scanResultData = null;
 
 function startLoading() {
@@ -66,6 +68,10 @@ function startLoading() {
   loadingProgress = 0;
   loadingTarget = 90;
   scanResultData = null;
+  fallbackLocalScan = null;
+
+  const useLocalBtn = $('useLocalBtn');
+  if (useLocalBtn) useLocalBtn.hidden = true;
 
   const stepIds = ['url', 'domain', 'company', 'ssl', 'db', 'ai'];
   stepIds.forEach((id) => {
@@ -82,11 +88,20 @@ function startLoading() {
   if (fillEl) fillEl.style.width = '0%';
   if (valEl) valEl.textContent = '0%';
 
+  // 15-second safety fallback timer to prevent permanent stuck states
+  clearTimeout(loadingTimeoutTimer);
+  loadingTimeoutTimer = setTimeout(() => {
+    if (!scanResultData) {
+      stopLoading();
+      showError('Analysis timed out after 15 seconds. Make sure your Node backend server is running on http://localhost:3001.');
+    }
+  }, 15000);
+
   loadingInterval = setInterval(() => {
     const currentTarget = scanResultData ? 100 : loadingTarget;
     if (loadingProgress < currentTarget) {
       const diff = currentTarget - loadingProgress;
-      const step = scanResultData ? Math.max(4, diff * 0.2) : Math.max(1, diff * 0.1);
+      const step = scanResultData ? Math.max(5, diff * 0.25) : Math.max(0.8, diff * 0.08);
       loadingProgress = Math.min(currentTarget, loadingProgress + step);
     }
 
@@ -103,17 +118,17 @@ function startLoading() {
         showError('No scan data received from analysis worker.');
       }
     }
-  }, 50);
+  }, 40);
 }
 
 function updateLoadingSteps(progress) {
   const steps = [
-    { id: 'url', min: 0, max: 15 },
-    { id: 'domain', min: 15, max: 35 },
-    { id: 'company', min: 35, max: 55 },
+    { id: 'url', min: 0, max: 20 },
+    { id: 'domain', min: 20, max: 40 },
+    { id: 'company', min: 40, max: 55 },
     { id: 'ssl', min: 55, max: 70 },
-    { id: 'db', min: 70, max: 85 },
-    { id: 'ai', min: 85, max: 100 },
+    { id: 'db', min: 70, max: 90 },
+    { id: 'ai', min: 90, max: 100 },
   ];
 
   steps.forEach((step) => {
@@ -139,28 +154,66 @@ function stopLoading() {
     clearInterval(loadingInterval);
     loadingInterval = null;
   }
+  if (loadingTimeoutTimer) {
+    clearTimeout(loadingTimeoutTimer);
+    loadingTimeoutTimer = null;
+  }
 }
 
-function showError(msg) {
+function showError(msg, fallbackScan = null) {
   stopLoading();
-  $('errorMsg').textContent = msg || 'Something went wrong.';
+  console.error('[DraftJobs] Analysis error:', msg);
+
+  const aiProc = $('load-proc-ai');
+  if (aiProc) {
+    aiProc.className = 'proc-item proc-item--error';
+    const status = aiProc.querySelector('.proc-item__status');
+    if (status) status.textContent = '✗';
+  }
+
+  $('errorTitle').textContent = 'Analysis Interrupted';
+  $('errorMsg').textContent = msg || 'Something went wrong during analysis.';
+
+  const useLocalBtn = $('useLocalBtn');
+  if (fallbackScan && useLocalBtn) {
+    fallbackLocalScan = fallbackScan;
+    useLocalBtn.hidden = false;
+  } else if (useLocalBtn) {
+    useLocalBtn.hidden = true;
+  }
+
   setState('error');
 }
 
 async function scan() {
   startLoading();
+  console.log('[DraftJobs] Starting scan request');
+
   const resp = await send({ type: 'SCAN_PAGE' });
+
   if (resp.error) {
     stopLoading();
     showError(resp.error);
     return;
   }
+
   if (!resp.scan) {
     stopLoading();
-    showError('No result returned. Try again.');
+    showError('No scan result returned. Reload the job posting page and try again.');
     return;
   }
+
   currentScan = resp.scan;
+
+  // Check if backend analysis returned an error (e.g. backend offline or AI timeout)
+  if (resp.scan.backendError) {
+    console.warn('[DraftJobs] Backend error detected:', resp.scan.backendError);
+    // If we have local scan data, we can either render it or show error with local fallback
+    stopLoading();
+    showError(`Backend AI Analysis Failed: ${resp.scan.backendError}`, resp.scan);
+    return;
+  }
+
   scanResultData = resp.scan;
 }
 
@@ -294,10 +347,10 @@ function renderResumePanel(scan) {
     tipList.replaceChildren();
     const tips = [];
     for (const p of (scan.positives || []).slice(0, 3)) {
-      tips.push({ text: p, type: 'good' });
+      tips.push({ text: typeof p === 'string' ? p : p.description, type: 'good' });
     }
     for (const n of (scan.negatives || []).slice(0, 3)) {
-      tips.push({ text: n, type: 'warn' });
+      tips.push({ text: typeof n === 'string' ? n : n.description, type: 'warn' });
     }
     if (tips.length === 0) {
       const li = document.createElement('li');
@@ -329,15 +382,15 @@ function renderAtsPanel(scan) {
 
   const atsLabel = document.getElementById('atsMatchLabel');
   if (atsLabel) {
-    const lvl = scan.riskLevel || 'safe';
+    const lvl = String(scan.riskLevel || 'LOW').toUpperCase();
     const msgs = {
-      safe:     'Strong ATS match. Posting looks legitimate.',
-      low:      'Good match. Minor signals to review.',
-      medium:   'Moderate match. Proceed with caution.',
-      high:     'Weak match. Several red flags present.',
-      critical: 'Very low match. Likely fraudulent posting.',
+      LOW:       'Strong ATS match. Posting looks legitimate.',
+      MODERATE:  'Good match. Minor signals to review.',
+      HIGH:      'Weak match. Several red flags present.',
+      VERY_HIGH: 'Very low match. Likely fraudulent posting.',
+      CRITICAL:  'Critical risk. Avoid applying.',
     };
-    atsLabel.textContent = msgs[lvl] || msgs.safe;
+    atsLabel.textContent = msgs[lvl] || msgs.LOW;
   }
 
   const bdList = document.getElementById('atsBreakdownList');
@@ -363,15 +416,15 @@ function renderAtsPanel(scan) {
   const icon = document.getElementById('atsVerdictIcon');
   const text = document.getElementById('atsVerdictText');
   if (icon && text) {
-    const lvl = scan.riskLevel || 'safe';
+    const lvl = String(scan.riskLevel || 'LOW').toUpperCase();
     const verdicts = {
-      safe:     { icon: '✓', msg: 'Safe to apply. Posting passes all checks.' },
-      low:      { icon: '✓', msg: 'Generally safe. Double-check company details.' },
-      medium:   { icon: '⚠', msg: 'Be cautious. Review flagged items before applying.' },
-      high:     { icon: '✗', msg: 'High risk. Avoid sharing personal details.' },
-      critical: { icon: '✗', msg: 'Likely scam. Do not apply or share information.' },
+      LOW:       { icon: '✓', msg: 'Safe to apply. Posting passes checks.' },
+      MODERATE:  { icon: '✓', msg: 'Generally safe. Double-check company details.' },
+      HIGH:      { icon: '⚠', msg: 'High risk. Review flagged items before applying.' },
+      VERY_HIGH: { icon: '✗', msg: 'Very high risk. Do NOT share personal details.' },
+      CRITICAL:  { icon: '✗', msg: 'Likely scam. Do not apply or pay money.' },
     };
-    const v = verdicts[lvl] || verdicts.safe;
+    const v = verdicts[lvl] || verdicts.LOW;
     icon.textContent = v.icon;
     text.textContent = v.msg;
   }
@@ -399,6 +452,16 @@ function init() {
   $('scanBtn').addEventListener('click', scan);
   $('rescanBtn').addEventListener('click', scan);
   $('retryBtn').addEventListener('click', scan);
+
+  const useLocalBtn = $('useLocalBtn');
+  if (useLocalBtn) {
+    useLocalBtn.addEventListener('click', () => {
+      if (fallbackLocalScan) {
+        renderResult(fallbackLocalScan);
+      }
+    });
+  }
+
   $('reportBtn').addEventListener('click', openReport);
   $('reportCancel').addEventListener('click', closeReport);
   $('reportSubmit').addEventListener('click', submitReport);

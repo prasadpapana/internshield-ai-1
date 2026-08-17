@@ -279,6 +279,12 @@ body {
 .proc-item--done { color: var(--safe); }
 .proc-item--active { color: var(--brand); font-weight: 600; }
 .proc-item--pending { color: var(--muted); opacity: 0.6; }
+.proc-item--error { color: #e11d48; font-weight: 600; }
+
+.errbox { text-align: center; padding: 24px 16px; color: var(--ink); }
+.errbox__title { font-size: 16px; font-weight: 700; margin: 10px 0 6px; }
+.errbox__msg { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
+.errbox__actions { display: flex; gap: 10px; justify-content: center; }
 
 .progress-container {
   margin-top: 14px;

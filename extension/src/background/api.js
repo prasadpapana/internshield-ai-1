@@ -3,11 +3,11 @@
 
 import { validateAnalysisResult } from './validators.js';
 
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 12000;
 const MAX_BYTES = 512 * 1024;
 
 async function request(baseUrl, endpoint, payload) {
-  if (!baseUrl) throw new Error('No backend URL configured');
+  if (!baseUrl) throw new Error('No backend URL configured in settings');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -15,6 +15,7 @@ async function request(baseUrl, endpoint, payload) {
   const targetUrl = endpoint.startsWith('http') ? endpoint : `${cleanBase}${endpoint}`;
 
   try {
+    console.log(`[DraftJobs] Backend request started: POST ${targetUrl}`);
     const res = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,13 +32,25 @@ async function request(baseUrl, endpoint, payload) {
       } catch {
         if (errText) errMsg = errText.slice(0, 150);
       }
+      console.error(`[DraftJobs] Backend error: ${errMsg}`);
       throw new Error(errMsg);
     }
 
     const text = await res.text();
     if (text.length > MAX_BYTES) throw new Error('Response body exceeded size limit');
 
+    console.log('[DraftJobs] Backend response received');
     return JSON.parse(text);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      console.error('[DraftJobs] Timeout: Backend request timed out after 12s');
+      throw new Error('Backend request timed out after 12 seconds');
+    }
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+      console.error(`[DraftJobs] Backend error: Connection refused to ${cleanBase}`);
+      throw new Error(`Backend server unreachable at ${cleanBase}. Please start the Node server (npm start).`);
+    }
+    throw err;
   } finally {
     clearTimeout(timer);
   }
@@ -51,42 +64,50 @@ export async function analyzeJobWithGrok(baseUrl, page, localScan) {
   if (!baseUrl) return localScan;
 
   try {
+    console.log('[DraftJobs] Sending job data for Grok AI verification');
     const response = await request(baseUrl, '/api/analyze', { page, scan: localScan });
 
     if (!response || !response.success || !response.data) {
-      console.warn('Backend Grok analysis returned unsuccessful response:', response?.error);
-      return localScan;
+      console.warn('[DraftJobs] Backend Grok analysis unsuccessful response:', response?.error);
+      return {
+        ...localScan,
+        backendError: response?.error || 'Unsuccessful AI analysis response',
+      };
     }
 
     const grokData = validateAnalysisResult(response.data);
     if (!grokData.valid) {
-      console.warn('Grok response failed schema validation:', response.data);
+      console.warn('[DraftJobs] Grok response failed schema validation:', response.data);
       return localScan;
     }
 
-    const blendedTrustScore = Math.round(localScan.trustScore * 0.5 + grokData.trustScore * 0.5);
+    const blendedTrustScore = typeof grokData.trustScore === 'number'
+      ? Math.round(localScan.trustScore * 0.5 + grokData.trustScore * 0.5)
+      : localScan.trustScore;
+
     const mergedNegatives = Array.from(new Set([
       ...(localScan.negatives || []),
-      ...(grokData.signals || []),
-    ]));
+      ...(grokData.signals || []).map((s) => (typeof s === 'string' ? s : s.description || s.label)),
+    ])).filter(Boolean);
 
     let riskLabel = localScan.riskLabel;
     let riskLevel = localScan.riskLevel;
 
-    if (grokData.riskLevel === 'VERY HIGH' || grokData.riskLevel === 'CRITICAL') {
-      riskLevel = 'critical';
-      riskLabel = 'Likely scam (AI Verified)';
+    if (grokData.riskLevel === 'VERY_HIGH' || grokData.riskLevel === 'CRITICAL') {
+      riskLevel = 'VERY_HIGH';
+      riskLabel = 'Very High Risk (AI Verified)';
     } else if (grokData.riskLevel === 'HIGH') {
-      riskLevel = 'high';
-      riskLabel = 'High risk (AI Verified)';
+      riskLevel = 'HIGH';
+      riskLabel = 'High Risk (AI Verified)';
     } else if (grokData.riskLevel === 'MODERATE') {
-      riskLevel = 'medium';
-      riskLabel = 'Be cautious';
+      riskLevel = 'MODERATE';
+      riskLabel = 'Moderate Risk';
     } else if (grokData.riskLevel === 'LOW') {
-      riskLevel = blendedTrustScore >= 80 ? 'safe' : 'low';
-      riskLabel = blendedTrustScore >= 80 ? 'Looks legitimate' : 'Probably fine';
+      riskLevel = blendedTrustScore >= 80 ? 'LOW' : 'MODERATE';
+      riskLabel = blendedTrustScore >= 80 ? 'Low Risk' : 'Moderate Risk';
     }
 
+    console.log('[DraftJobs] Analysis completed successfully with Grok AI');
     return {
       ...localScan,
       trustScore: blendedTrustScore,
@@ -101,7 +122,7 @@ export async function analyzeJobWithGrok(baseUrl, page, localScan) {
       source: 'grok-enriched',
     };
   } catch (err) {
-    console.error('Grok AI analysis failed, falling back to local engine:', err.message);
+    console.error('[DraftJobs] Backend error:', err.message);
     return {
       ...localScan,
       backendError: err.message,

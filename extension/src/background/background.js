@@ -4,12 +4,10 @@
 import { scoreJob } from './ai.js';
 import * as store from './storage.js';
 import * as api from './api.js';
-import { handleMessage } from './message-handler.js';
-import { sanitizePageData, isValidMessage, sanitizeReportReason } from './validators.js';
+import { isValidMessage, sanitizePageData, sanitizeReportReason } from './validators.js';
 import { uid, getActiveTab } from './helpers.js';
 import { LIMITS } from './constants.js';
 
-// Install defaults on first run
 chrome.runtime.onInstalled.addListener(async () => {
   const current = await store.getSettings();
   await store.saveSettings(current);
@@ -40,7 +38,7 @@ async function ensureContentAndExtract(tabId) {
     });
     data = await askPageData(tabId);
   } catch (err) {
-    console.warn('Script injection failed:', err);
+    console.warn('[DraftJobs] Script injection failed:', err);
     data = null;
   }
   return data;
@@ -78,7 +76,8 @@ async function runScan(tab) {
 
 function maybeNotify(scan, settings) {
   if (!settings.notifications) return;
-  if (!['medium', 'high', 'critical'].includes(scan.riskLevel)) return;
+  const level = String(scan.riskLevel || '').toUpperCase();
+  if (!['MODERATE', 'HIGH', 'VERY_HIGH', 'CRITICAL'].includes(level)) return;
 
   try {
     chrome.notifications.create(`is_${scan.id}`, {
@@ -110,10 +109,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   await runScan(tab);
 });
 
-// Message listener
+// Message listener with guaranteed response resolution
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!isValidMessage(msg)) {
-    sendResponse({ error: 'Bad request' });
+    sendResponse({ error: 'Bad request: invalid message format' });
     return false;
   }
 
@@ -126,7 +125,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         case 'SCAN_PAGE': {
           const tab = await getActiveTab();
-          sendResponse(await runScan(tab));
+          const result = await runScan(tab);
+          sendResponse(result);
           break;
         }
 
@@ -182,7 +182,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           sendResponse({ error: 'Unknown action' });
       }
     } catch (err) {
-      console.error('Background message error:', err);
+      console.error('[DraftJobs] Background message error:', err);
       sendResponse({ error: String((err && err.message) || err) });
     }
   })();
