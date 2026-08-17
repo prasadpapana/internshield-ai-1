@@ -1,13 +1,13 @@
 // extension/src/background/background.js
 // MV3 Service Worker for DraftJobs.
 
-import { scoreJob } from '../services/ai.js';
+import { scoreJob } from './ai.js';
 import * as store from './storage.js';
 import * as api from './api.js';
 import { handleMessage } from './message-handler.js';
-import { sanitizePageData, isValidMessage, sanitizeReportReason } from '../utils/validators.js';
-import { uid, getActiveTab } from '../utils/helpers.js';
-import { LIMITS } from '../utils/constants.js';
+import { sanitizePageData, isValidMessage, sanitizeReportReason } from './validators.js';
+import { uid, getActiveTab } from './helpers.js';
+import { LIMITS } from './constants.js';
 
 // Install defaults on first run
 chrome.runtime.onInstalled.addListener(async () => {
@@ -111,7 +111,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 });
 
 // Message listener
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!isValidMessage(msg)) {
     sendResponse({ error: 'Bad request' });
     return false;

@@ -1,7 +1,7 @@
 // extension/src/background/api.js
 // Client API for communicating with the DraftJobs Backend & Grok AI.
 
-import { validateAnalysisResult } from '../../../shared/schemas/analysis-schema.js';
+import { validateAnalysisResult } from './validators.js';
 
 const TIMEOUT_MS = 15000;
 const MAX_BYTES = 512 * 1024;
