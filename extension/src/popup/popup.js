@@ -469,7 +469,7 @@ function init() {
     if (e.target === $('reportModal')) closeReport();
   });
   $('openHistory').addEventListener('click', () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL('src/history/history.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('src/settings/settings.html') });
   });
   $('openSettings').addEventListener('click', () => {
     if (chrome.runtime.openOptionsPage) chrome.runtime.openOptionsPage();

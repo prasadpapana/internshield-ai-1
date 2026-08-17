@@ -1,6 +1,6 @@
 // extension/src/background/message-handler.js
 
-import { isValidMessage } from '../utils/validators.js';
+import { isValidMessage } from './validators.js';
 
 export function handleMessage(msg, sender, handlers) {
   if (!isValidMessage(msg)) {
