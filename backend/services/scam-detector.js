@@ -1,5 +1,7 @@
 // backend/services/scam-detector.js
-// Server-side deterministic scam signal detector with accurate, non-duplicating signal deductions.
+// Server-side deterministic scam signal detector.
+// NO platform-specific scoring — all rules are based purely on posting content,
+// recruiter signals, URL safety, and verifiable scam patterns.
 
 export const DETECTABLE_SCAM_RULES = [
   {
@@ -7,48 +9,55 @@ export const DETECTABLE_SCAM_RULES = [
     severity: 'CRITICAL',
     deduction: 40,
     description: 'Requests candidate for OTP, password, or account login credentials.',
-    re: /\b(otp|one\s*time\s*password|login\s*password|account\s*password|verification\s*code)\b/i,
+    // Requires explicit request/submission verb — avoids matching normal security mentions
+    re: /\b(enter|provide|share|send|submit)\b[^.]{0,20}\b(otp|one[\s-]time\s+password|login\s+password|account\s+password)\b|\b(otp|one[\s-]time\s+password)\s+(to|for|and)\b/i,
   },
   {
     type: 'BANK_DETAILS_REQUEST',
     severity: 'CRITICAL',
     deduction: 35,
     description: 'Requests bank account number, routing number, IFSC, or card details.',
-    re: /\b(bank\s+account|routing\s+number|ifsc|credit\s+card|debit\s+card|cvv|bank\s+details)\b/i,
+    // Requires explicit request verb to avoid matching salary/pay-slip context
+    re: /\b(provide|share|send|submit|enter)\b[^.]{0,25}\b(bank\s+account|routing\s+number|ifsc|credit\s+card|debit\s+card|cvv|bank\s+details)\b|\b(bank\s+account|ifsc|routing\s+number)\s+(number|details|info)\s+(required|needed|for\s+payout)\b/i,
   },
   {
     type: 'PAYMENT_FEE_REQUEST',
     severity: 'HIGH',
     deduction: 30,
-    description: 'Asks applicant to pay a registration fee, processing charge, training cost, or security deposit.',
-    re: /\b(registration|processing|training|application|onboarding|security|refundable)\s+(fee|cost|charge|amount|deposit)\b|\b(pay|send|deposit|transfer|wire)\b[^.]{0,35}\b(fee|money|amount|\$|usd|inr|rs)\b/i,
+    description: 'Requires upfront payment: registration fee, training fee, or security deposit.',
+    // TIGHTENED to avoid false positives on:
+    //   - Normal salary/pay text: 'Pay: INR 15,000/month', 'Pay scale: Rs 8,000'
+    //   - Disclaimer/negative: 'No registration fee required', 'We do not charge any fee'
+    // Only matches when a fee is clearly CHARGED to the applicant.
+    re: /\b(?<!no\s)(?<!not\s)(?<!without\s)(registration|processing|training|onboarding|security|refundable)\s+(fee|cost|charge|deposit)\s+(?!is\s+not|are\s+not|not\s+required|not\s+charged)\b|\b(candidates?|applicants?|students?|you)\b[^.!?]{0,50}\b(pay|deposit|transfer|wire)\b[^.!?]{0,30}\b(fee|registration|deposit|charges?)\b/i,
   },
   {
     type: 'IDENTITY_DOC_REQUEST',
     severity: 'HIGH',
     deduction: 25,
     description: 'Requests sensitive personal identity documents (Aadhaar, SSN, Passport) prior to hiring.',
-    re: /\b(ssn|social\s+security\s+number|aadhaar|passport\s+number|national\s+id)\b/i,
+    // Requires explicit request/submission context
+    re: /\b(submit|provide|send|share|upload)\b[^.]{0,30}\b(aadhaar|ssn|social\s+security\s+number|passport\s+number|national\s+id)\b|\b(aadhaar|ssn|passport\s+number)\b[^.]{0,20}\b(required|mandatory|needed\s+to\s+apply)\b/i,
   },
   {
     type: 'SUSPICIOUS_SOFTWARE',
     severity: 'HIGH',
     deduction: 25,
-    description: 'Instructs applicant to download or install external files, unknown software, or APKs.',
-    re: /\b(download|install|run)\b[^.]{0,35}\b(software|app|apk|file|installer|exe|anydesk|teamviewer)\b/i,
+    description: 'Instructs applicant to download or install external software, APKs, or remote access tools.',
+    re: /\b(download|install|run)\b[^.]{0,35}\b(software|apk|installer|exe|anydesk|teamviewer|remote\s+access)\b/i,
   },
   {
     type: 'CRYPTO_PAYMENT',
     severity: 'HIGH',
     deduction: 25,
-    description: 'Mentions payments or fees via Cryptocurrency, USDT, gift cards, or Western Union.',
-    re: /\b(bitcoin|crypto|usdt|ethereum|gift\s+card|western\s+union|moneygram)\b/i,
+    description: 'Mentions payments via Cryptocurrency, USDT, gift cards, or Western Union.',
+    re: /\b(bitcoin|crypto(?:currency)?|usdt|ethereum|gift\s+card|western\s+union|moneygram)\b/i,
   },
   {
     type: 'SUSPICIOUS_DOMAIN',
     severity: 'MEDIUM',
     deduction: 20,
-    description: 'Job posting is served over insecure HTTP or hosted on a high-risk domain extension.',
+    description: 'Job posting is on insecure HTTP or a high-risk domain extension.',
     check: (page) => {
       const url = page.url || '';
       if (url.startsWith('http://')) return true;
@@ -67,10 +76,10 @@ export const DETECTABLE_SCAM_RULES = [
     type: 'SUSPICIOUS_EMAIL',
     severity: 'MEDIUM',
     deduction: 20,
-    description: 'Recruiter relies on a free email domain (Gmail, Yahoo, Outlook) instead of an official company email.',
+    description: 'Recruiter relies on a free personal email domain (Gmail, Yahoo, Outlook) instead of a corporate email.',
     check: (page) => {
       const emails = page.emails || [];
-      const freeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'ymail.com', 'aol.com'];
+      const freeDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'ymail.com', 'aol.com', 'rediffmail.com'];
       return emails.some((e) => freeDomains.some((d) => e.toLowerCase().endsWith(d)));
     },
   },
@@ -78,35 +87,37 @@ export const DETECTABLE_SCAM_RULES = [
     type: 'MESSAGING_ONLY',
     severity: 'MEDIUM',
     deduction: 15,
-    description: 'Recruiter restricts communication to messaging apps (Telegram, WhatsApp, Signal).',
-    re: /\b(whatsapp|telegram|signal)\b|\b(contact|reach|message|text|chat)\b[^.]{0,40}\b(whatsapp|telegram|signal)\b/i,
+    description: 'Recruiter directs all applicant contact exclusively to Telegram, WhatsApp, or Signal.',
+    // Tightened: only flags "only/exclusively" contact via messaging apps
+    re: /\b(contact|reach|message|communicate|apply)\b[^.]{0,50}\b(only|exclusively|strictly)\b[^.]{0,30}\b(telegram|whatsapp|signal)\b|\b(telegram|whatsapp|signal)\b[^.]{0,30}\b(only|exclusively|contact\s+us)\b/i,
   },
   {
     type: 'UNREALISTIC_SALARY',
     severity: 'MEDIUM',
     deduction: 15,
-    description: 'Advertises unrealistic fast earnings claims (e.g. $500/day, fast daily cash).',
-    re: /\b(earn|make|get\s+paid)\b[^.]{0,25}\b(\$?\d{3,5})\b[^.]{0,15}\b(per\s+)?(day|daily|hour)\b/i,
+    description: 'Advertises unrealistic fast earnings (e.g. earn $500/day).',
+    // Only triggers on verb + specific high amount + per-day/hour — NOT on normal monthly stipend text
+    re: /\b(earn|make|get\s+paid)\b[^.]{0,30}\b(\$?(?:[5-9]\d{2}|[1-9]\d{3,}))\b[^.]{0,20}\b(per\s+day|per\s+hour|daily|hourly)\b/i,
   },
   {
     type: 'UNREALISTIC_WFH',
     severity: 'MEDIUM',
     deduction: 15,
-    description: 'Promises 100% guaranteed income, no interview needed, or easy work-from-home money.',
-    re: /\b(guaranteed|100%)\s+(income|job|placement|salary|selection)|\b(no\s+(interview|experience|skills?)\s+(required|needed|necessary))\b/i,
+    description: 'Promises 100% guaranteed income or selection without any interview process.',
+    re: /\b(guaranteed|100%)\s+(income|placement|salary|selection|hiring)\b|\b(no\s+interview\s+(required|needed))\b/i,
   },
   {
     type: 'URGENT_PRESSURE',
     severity: 'LOW',
     deduction: 10,
-    description: 'Employs urgent high-pressure tactics (ASAP, act now, limited slots, immediate hiring).',
-    re: /\b(urgent|immediate(ly)?|act\s+now|limited\s+(slots|seats|positions)|hurry|asap)\b/i,
+    description: 'Employs high-pressure urgency tactics (act now, limited slots, hurry up).',
+    re: /\b(act\s+now|limited\s+(slots|seats|positions)|hurry\s+up)\b/i,
   },
   {
     type: 'MISSING_COMPANY_INFO',
     severity: 'LOW',
     deduction: 10,
-    description: 'Hiring company name is missing, hidden, or unverified.',
+    description: 'No identifiable hiring company name in the posting.',
     check: (page) => !page.company || page.company.trim().length < 2 || page.company.toLowerCase() === 'unknown company',
   },
 ];
